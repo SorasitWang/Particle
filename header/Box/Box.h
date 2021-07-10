@@ -15,8 +15,8 @@
 
 class Box {
 public :
-	Box() {
-
+	Box(float size) {
+		this->size = size;
 	}
 	unsigned int VAO, VBO, EBO;
 	float size = 0.5;

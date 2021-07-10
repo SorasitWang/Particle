@@ -19,7 +19,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow* window);
 
 const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_HEIGHT = 800;
 
 
 
@@ -65,7 +65,8 @@ int main()
     }
 
     Shader boxShader = Shader("box.vs", "box.fs");
-    Box box = Box();
+    float sizeWall = 0.5;
+    Box box = Box(sizeWall);
 
     Ball ball = Ball();
 
@@ -94,7 +95,7 @@ int main()
 
       
         box.draw(boxShader);
-        ball.draw(boxShader);
+        ball.draw(boxShader, deltaTime,sizeWall);
 
         // camera/view transformation
 
