@@ -31,6 +31,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
+int numBalls = 1;
+std::vector<Ball> balls;
 int main()
 {
 
@@ -66,12 +68,16 @@ int main()
 
     Shader boxShader = Shader("box.vs", "box.fs");
     float sizeWall = 0.5;
+    srand(time(0));
+    for (int i = 0; i < numBalls; i++) {
+        balls.push_back(Ball());
+        balls[i].init(boxShader);
+    }
     Box box = Box(sizeWall);
 
-    Ball ball = Ball();
-
+   
     box.init(boxShader);
-    ball.init(boxShader);
+
 
     glEnable(GL_DEPTH_TEST);
 
@@ -95,7 +101,10 @@ int main()
 
       
         box.draw(boxShader);
-        ball.draw(boxShader, deltaTime,sizeWall);
+        for (int i = 0; i < numBalls; i++) {
+            balls[i].draw(boxShader, deltaTime, sizeWall,balls,i);
+        }
+
 
         // camera/view transformation
 

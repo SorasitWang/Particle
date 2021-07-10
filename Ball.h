@@ -27,8 +27,8 @@ public:
 	float radius = 0.05;
 	float lifeTime = 5.0f;
 	float curTime = 0;
-	float velocity=1, acc=0.0f , g=0.05,gVelo = 0.0f;
-	glm::vec3 direction = glm::vec3(0.3f,0.5f,0.0f);
+	float acc=0.0f , g=0.04,gVelo = 0.0f;
+	glm::vec3 velocity = glm::vec3(0.3f,0.5f,0.0f);
 	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	void init(Shader shader) {
@@ -45,8 +45,8 @@ public:
 			idx += 3;
 		}
 		
-		setRandDirection();
-		std::cout << direction.x << " " << direction.y << std::endl;
+		setRand();
+		
 		
 		glGenVertexArrays(1, &this->VAO);
 		glGenBuffers(1, &this->VBO);
@@ -68,7 +68,7 @@ public:
 		
 	}
 
-	void draw(Shader shader,float deltaTime,float sizeWall) {
+	void draw(Shader shader,float deltaTime,float sizeWall,std::vector<Ball> balls,int idx) {
 		curTime += deltaTime;
 		shader.use();
 
@@ -78,19 +78,25 @@ public:
 		wallBorder.push_back(sizeWall); wallBorder.push_back(-sizeWall); wallBorder.push_back(sizeWall); wallBorder.push_back(-sizeWall);
 		//std::cout << isColWall(wallBorder) << std::endl;
 		
+		
+		
 		std::string check = isColWall(wallBorder);
+		isColBall(balls, idx);
+
+		/*if (check != "")
+			std::cout << check << std::endl;*/
 		if (check == "UP" || check=="DOWN") {
-			direction.y *= -1;
+			velocity.y *= -1;
 		}
 		else if (check == "RIGHT" || check == "LEFT") {
-			direction.x *= -1;
+			velocity.x *= -1;
 		}
-		//std::cout << gVelo << std::endl;
-		position += direction * velocity * deltaTime;
+		position += velocity * deltaTime;
 		//gVelo += g * deltaTime;
-		//position.y -= gVelo * deltaTime;
+		//velocity.y -= gVelo * deltaTime;
 		velocity += acc * deltaTime;
 		model = glm::translate(model, position);
+		
 		
 		shader.setMat4("model", model);
 
@@ -101,31 +107,62 @@ public:
 
 	}
 
+	
+
+private :
+
+	void setRand() {
+		rand();
+		this->velocity.x = ((float)rand() / RAND_MAX) - 0.5;
+		this->velocity.y = ((float)rand() / RAND_MAX) - 0.5;
+
+		this->position.x = (((float)rand() / RAND_MAX) - 0.5) ;
+		this->position.y = (((float)rand() / RAND_MAX) - 0.5) ;
+
+		this->velocity = glm::normalize(velocity);
+	}
+
 	std::string isColWall(std::vector<float> wallBorder) {
 		float right = wallBorder[0], left = wallBorder[1], up = wallBorder[2], down = wallBorder[3];
 		//std::cout << position.x+radius << " " << right << std::endl;
 		if (position.x + radius >= right) {
+			position.x = right - radius;
 			return "RIGHT";
 		}
 		if (position.x - radius <= left) {
+			position.x = left + radius;
 			return "LEFT";
 		}
 		if (position.y + radius >= up) {
+			position.y = up - radius;
 			return "UP";
 		}
 		if (position.y - radius <= down) {
+			position.y = down + radius;
 			return "DOWN";
 		}
 		return "";
 	}
 
-private :
-	void setRandDirection() {
-		srand(time(0));
-		rand();
-		this->direction.x = ((float)rand() / RAND_MAX) - 0.5;
-		this->direction.y = ((float)rand() / RAND_MAX) - 0.5;
-		glm::normalize(direction);
+	void isColBall(std::vector<Ball> balls, int idx) {
+		for (int i = 0; i < balls.size(); i++) {
+			if (collapse(balls[i].position) && idx != i) {
+				std::cout << "col" << std::endl;
+				glm::vec3 tmp = velocity;
+				//std::cout << tmp.x << " " << tmp.y << " " << balls[i].velocity.x << " " << balls[i].velocity.y << std::endl;
+				this->velocity = glm::vec3(-1) * this->velocity + balls[i].velocity;
+				balls[i].velocity = glm::vec3(-1) * balls[i].velocity + tmp;
+				//std::cout << this->velocity.x << " " << this->velocity.y << " " << balls[i].velocity.x << " " << balls[i].velocity.y << std::endl;
+				this->velocity = glm::normalize(this->velocity);
+				balls[i].velocity = glm::normalize(balls[i].velocity);
+				return;
+			}
+		}
+
 	}
 
+	float collapse(glm::vec3 pos2) {
+		std::cout << sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2)) << std::endl;
+		return sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2)) <= 2*this->radius;
+	}
 };
