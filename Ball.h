@@ -14,7 +14,7 @@
 #include <iostream>
 #include <string>
 #include <time.h>
-
+#include "Utility.h"
 class Ball {
 public:
 	Ball(float g) {
@@ -27,6 +27,7 @@ public:
 	float radius = 0.05;
 	float lifeTime = 5.0f;
 	float curTime = 0;
+	float veloLost = 0.95;
 	float acc=0.0f , g=0.04,gVelo = 0.0f;
 	int countOnGround = 0;
 	glm::vec3 velocity = glm::vec3(1, 1, 1);
@@ -73,6 +74,7 @@ public:
 
 	void draw(Shader shader,float deltaTime,float sizeWall,std::vector<Ball> balls,int idx) {
 		curTime += deltaTime;
+		//if (curTime > lifeTime) return;
 		shader.use();
 
 		glm::mat4 model = glm::mat4(1.0f);
@@ -85,10 +87,10 @@ public:
 		
 		std::string check = isColWall(wallBorder);
 		isColBall(balls, idx,deltaTime);
-		std::cout << direction.y << std::endl;
+		//std::cout << direction.y << std::endl;
 		if (check == "UP" || check=="DOWN") {
 			//direction.y *= -1;
-			velocity.y *= -0.8;
+			velocity.y *= -veloLost ;
 		}
 		else if (check == "RIGHT" || check == "LEFT") {
 			direction.x *= -1;
@@ -161,16 +163,29 @@ private :
 	void isColBall(std::vector<Ball> balls, int idx,float deltaTime) {
 		for (int i = 0; i < balls.size(); i++) {
 			if (collapse(balls[i].position) && idx != i) {
-				//std::cout << "col" << std::endl;
+
 				glm::vec3 normal = glm::normalize(glm::vec3(this->position.x- balls[i].position.x , this->position.y - balls[i].position.y,0.0f));
-				//std::cout << this->velocity.x << " " << this->velocity.y << " " << glm::reflect(this->velocity, normal).x <<" " << glm::reflect(this->velocity, normal).y << std::endl;
 				
-				//this->velocity = glm::reflect(this->velocity, glm::vec3(-1) * normal);// + glm::vec3(0.8)*balls[i].velocity;
-				//balls[i].velocity = glm::reflect(balls[i].velocity,normal); //+glm::vec3(0.8) * tmp;
+				/*if vector direction WILL intercept with middle plane => apply bounce
+				when use center of ball as origin 
+				if intercept point in qurant which associater with vector Ex (+,-):(+,-)  ,  (+,0):(+,0)*/
+					//bounce is reflect with normal
+					
+				/*else if ALREADY interept => apply collision
+				if intercept point in qurant which oppoite with vector Ex (+, -):(-, +)  ,  (+, 0):(-, 0)*/
+					//collision is combined both vector by add Or reflect in some ways
+
+				//else if never intercept (pararelle) => do nothing
 				
-				/*this->velocity
+				
+				std::cout << glm::reflect(this->velocity, glm::vec3(-1) * normal).x << " "<<glm::reflect(this->velocity,  normal).x << std::endl;
+				this->velocity = glm::reflect(this->velocity, glm::vec3(-1) * normal);// + glm::vec3(0.8)*balls[i].velocity;
+				balls[i].velocity = glm::reflect(balls[i].velocity,normal); //+glm::vec3(0.8) * tmp;
+				
+				
+				//this->velocity
 				this->velocity = glm::normalize(this->velocity);
-				balls[i].velocity = glm::normalize(balls[i].velocity);*/
+				balls[i].velocity = glm::normalize(balls[i].velocity);
 
 				/*this->position += glm::vec3(3)*this->velocity * deltaTime;
 				balls[i].position += glm::vec3(3) * balls[i].velocity * deltaTime;*/

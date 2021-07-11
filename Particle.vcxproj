@@ -154,6 +154,7 @@
     <ClInclude Include="header\camera.h" />
     <ClInclude Include="header\shader_m.h" />
     <ClInclude Include="header\stb_image.h" />
+    <ClInclude Include="Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="box.fs" />
