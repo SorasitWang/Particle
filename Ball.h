@@ -28,7 +28,10 @@ public:
 	float lifeTime = 5.0f;
 	float curTime = 0;
 	float acc=0.0f , g=0.04,gVelo = 0.0f;
-	glm::vec3 velocity = glm::vec3(0.3f,0.5f,0.0f);
+	int countOnGround = 0;
+	glm::vec3 velocity = glm::vec3(1, 1, 1);
+	glm::vec3 direction = glm::vec3(0.3,0.5,0.0f);
+	//glm::vec3 velocity = glm::vec3(1,1,0);
 	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	void init(Shader shader) {
@@ -81,19 +84,25 @@ public:
 		
 		
 		std::string check = isColWall(wallBorder);
-		isColBall(balls, idx);
-
-		/*if (check != "")
-			std::cout << check << std::endl;*/
+		isColBall(balls, idx,deltaTime);
+		std::cout << direction.y << std::endl;
 		if (check == "UP" || check=="DOWN") {
-			velocity.y *= -1;
+			//direction.y *= -1;
+			velocity.y *= -0.8;
 		}
 		else if (check == "RIGHT" || check == "LEFT") {
-			velocity.x *= -1;
+			direction.x *= -1;
+			velocity.x *= 0.8;
 		}
-		position += velocity * deltaTime;
-		//gVelo += g * deltaTime;
-		//velocity.y -= gVelo * deltaTime;
+
+		if (isOnGround(wallBorder))
+			velocity.x -= 0.01 * deltaTime;
+		velocity.x = std::max(0.0f, velocity.x);
+		position.y += velocity.y* deltaTime;
+		position.x += direction.x * velocity.x * deltaTime;
+		gVelo += g * deltaTime;
+		velocity.y -= gVelo * deltaTime;
+		direction.y -= gVelo;
 		velocity += acc * deltaTime;
 		model = glm::translate(model, position);
 		
@@ -113,13 +122,18 @@ private :
 
 	void setRand() {
 		rand();
-		this->velocity.x = ((float)rand() / RAND_MAX) - 0.5;
-		this->velocity.y = ((float)rand() / RAND_MAX) - 0.5;
+		this->direction.x = ((float)rand() / RAND_MAX) - 0.5;
+		this->direction.y = ((float)rand() / RAND_MAX) - 0.5;
+		
+		//this->direction = glm::normalize(this->direction);
 
-		this->position.x = (((float)rand() / RAND_MAX) - 0.5) ;
-		this->position.y = (((float)rand() / RAND_MAX) - 0.5) ;
 
-		this->velocity = glm::normalize(velocity);
+		this->position.x = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
+		this->position.y = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
+
+		this->direction = glm::normalize(direction);
+		//this->directionX = this->velocity.x;
+		//this->velocity.x = 1;
 	}
 
 	std::string isColWall(std::vector<float> wallBorder) {
@@ -144,25 +158,47 @@ private :
 		return "";
 	}
 
-	void isColBall(std::vector<Ball> balls, int idx) {
+	void isColBall(std::vector<Ball> balls, int idx,float deltaTime) {
 		for (int i = 0; i < balls.size(); i++) {
 			if (collapse(balls[i].position) && idx != i) {
-				std::cout << "col" << std::endl;
-				glm::vec3 tmp = velocity;
-				//std::cout << tmp.x << " " << tmp.y << " " << balls[i].velocity.x << " " << balls[i].velocity.y << std::endl;
-				this->velocity = glm::vec3(-1) * this->velocity + balls[i].velocity;
-				balls[i].velocity = glm::vec3(-1) * balls[i].velocity + tmp;
-				//std::cout << this->velocity.x << " " << this->velocity.y << " " << balls[i].velocity.x << " " << balls[i].velocity.y << std::endl;
+				//std::cout << "col" << std::endl;
+				glm::vec3 normal = glm::normalize(glm::vec3(this->position.x- balls[i].position.x , this->position.y - balls[i].position.y,0.0f));
+				//std::cout << this->velocity.x << " " << this->velocity.y << " " << glm::reflect(this->velocity, normal).x <<" " << glm::reflect(this->velocity, normal).y << std::endl;
+				
+				//this->velocity = glm::reflect(this->velocity, glm::vec3(-1) * normal);// + glm::vec3(0.8)*balls[i].velocity;
+				//balls[i].velocity = glm::reflect(balls[i].velocity,normal); //+glm::vec3(0.8) * tmp;
+				
+				/*this->velocity
 				this->velocity = glm::normalize(this->velocity);
-				balls[i].velocity = glm::normalize(balls[i].velocity);
-				return;
+				balls[i].velocity = glm::normalize(balls[i].velocity);*/
+
+				/*this->position += glm::vec3(3)*this->velocity * deltaTime;
+				balls[i].position += glm::vec3(3) * balls[i].velocity * deltaTime;*/
+				/*while (collapse(balls[i].position)) {
+					this->position += this->velocity * deltaTime;
+					balls[i].position += balls[i].velocity * deltaTime;
+				}*/
+				//return;
 			}
 		}
 
 	}
 
 	float collapse(glm::vec3 pos2) {
-		std::cout << sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2)) << std::endl;
-		return sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2)) <= 2*this->radius;
+		//std::cout << sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2)) << std::endl;
+		return sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2)) <= 2.0*this->radius;
 	}
+
+	bool isOnGround(std::vector<float> wallBorder) {
+		float threshold = 0.001;
+		float down = wallBorder[3];
+		if (abs(this->position.y - this->radius - down) < threshold)
+			countOnGround += 1;
+		else countOnGround = 0;
+		if (countOnGround > 100) return true;
+	
+		return false;
+	}
+
+	
 };

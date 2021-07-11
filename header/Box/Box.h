@@ -21,6 +21,7 @@ public :
 	unsigned int VAO, VBO, EBO;
 	float size = 0.5;
 	float thin = 0.03;
+	float friction = 0.1;
 	void init(Shader shader) {
 		float vertices[3*8];
 		int index[24];
