@@ -27,9 +27,10 @@ public:
 	float radius = 0.05;
 	float lifeTime = 5.0f;
 	float curTime = 0;
-	float veloLost = 0.95;
-	float acc=0.0f , g=0.04,gVelo = 0.0f;
+	float veloLost = 0.9;
+	float acc=0.0f , g=0.01,gVelo = 0.0f;
 	int countOnGround = 0;
+	bool isIn = true;
 	glm::vec3 velocity = glm::vec3(1, 1, 1);
 	glm::vec3 direction = glm::vec3(0.3,0.5,0.0f);
 	//glm::vec3 velocity = glm::vec3(1,1,0);
@@ -85,17 +86,17 @@ public:
 		
 		
 		
-		std::string check = isColWall(wallBorder);
+		isColWall(wallBorder);
 		isColBall(balls, idx,deltaTime);
 		//std::cout << direction.y << std::endl;
-		if (check == "UP" || check=="DOWN") {
+		/*if (check == "UP" || check=="DOWN") {
 			//direction.y *= -1;
 			velocity.y *= -veloLost ;
 		}
 		else if (check == "RIGHT" || check == "LEFT") {
 			direction.x *= -1;
 			velocity.x *= 0.8;
-		}
+		}*/
 
 		if (isOnGround(wallBorder))
 			velocity.x -= 0.01 * deltaTime;
@@ -141,20 +142,35 @@ private :
 	std::string isColWall(std::vector<float> wallBorder) {
 		float right = wallBorder[0], left = wallBorder[1], up = wallBorder[2], down = wallBorder[3];
 		//std::cout << position.x+radius << " " << right << std::endl;
+		if (isIn == false) {
+			
+			if (position.y + radius <= up) {
+				std::cout << "In" << std::endl;
+				isIn = true;
+			}
+			return "";
+		}
 		if (position.x + radius >= right) {
 			position.x = right - radius;
+			direction.x *= -1;
+			velocity.x *= 0.8;
 			return "RIGHT";
 		}
 		if (position.x - radius <= left) {
 			position.x = left + radius;
+			direction.x *= -1;
+			velocity.x *= 0.8;
 			return "LEFT";
 		}
 		if (position.y + radius >= up) {
 			position.y = up - radius;
+			velocity.y *= -veloLost;
+			
 			return "UP";
 		}
 		if (position.y - radius <= down) {
 			position.y = down + radius;
+			velocity.y *= -veloLost;
 			return "DOWN";
 		}
 		return "";
@@ -163,24 +179,42 @@ private :
 	void isColBall(std::vector<Ball> balls, int idx,float deltaTime) {
 		for (int i = 0; i < balls.size(); i++) {
 			if (collapse(balls[i].position) && idx != i) {
-
+				//std::cout << "this " << position.x << " " << position.y << " / "<<direction.x << " " << velocity.y <<std::endl;
+				//std::cout << "ball " << balls[i].position.x << " " << balls[i].position.y << " / " << balls[i].direction.x << " " << balls[i].velocity.y << std::endl;
 				glm::vec3 normal = glm::normalize(glm::vec3(this->position.x- balls[i].position.x , this->position.y - balls[i].position.y,0.0f));
 				
+				glm::vec3 intercept = intercept2D(glm::vec3(direction.x,velocity.y,0.0f), this->position, glm::vec3(balls[i].direction.x, balls[i].velocity.y, 0.0f), balls[i].position);
+				//std::cout << intercept.x << " " << intercept.y << std::endl;
 				/*if vector direction WILL intercept with middle plane => apply bounce
 				when use center of ball as origin 
 				if intercept point in qurant which associater with vector Ex (+,-):(+,-)  ,  (+,0):(+,0)*/
 					//bounce is reflect with normal
-					
+				
+				if (checkSign(intercept.x - position.x) == (checkSign(direction.x)) && checkSign(intercept.y - position.y) == (checkSign(velocity.y))) {
+					//std::cout << "yes" << std::endl;
+					glm::vec3 a = glm::reflect(this->velocity,normal);// + glm::vec3(0.8)*balls[i].velocity;
+					 this->velocity.y = a.y; this->direction.x = a.x;
+					 glm::vec3 b = balls[i].velocity = glm::reflect(balls[i].velocity, normal); //+glm::vec3(0.8) * tmp;
+					balls[i].velocity.y = b.y; balls[i].direction.x = b.x;
+				}
 				/*else if ALREADY interept => apply collision
 				if intercept point in qurant which oppoite with vector Ex (+, -):(-, +)  ,  (+, 0):(-, 0)*/
 					//collision is combined both vector by add Or reflect in some ways
-
+				else if (checkSign(intercept.x - position.x) == -1 * (checkSign(direction.x)) && checkSign(intercept.y - position.y) == -1 * (checkSign(velocity.y))) {
+					//std::cout << "No" << std::endl;
+				}
+					/*else {
+					glm::vec3 a = glm::reflect(this->velocity, normal);// + glm::vec3(0.8)*balls[i].velocity;
+					this->velocity.y = a.y; this->direction.x = a.x;
+					glm::vec3 b = balls[i].velocity = glm::reflect(balls[i].velocity, normal); //+glm::vec3(0.8) * tmp;
+					balls[i].velocity.y = b.y; balls[i].direction.x = b.x;
+					}*/
 				//else if never intercept (pararelle) => do nothing
 				
 				
-				std::cout << glm::reflect(this->velocity, glm::vec3(-1) * normal).x << " "<<glm::reflect(this->velocity,  normal).x << std::endl;
-				this->velocity = glm::reflect(this->velocity, glm::vec3(-1) * normal);// + glm::vec3(0.8)*balls[i].velocity;
-				balls[i].velocity = glm::reflect(balls[i].velocity,normal); //+glm::vec3(0.8) * tmp;
+				//std::cout << glm::reflect(this->velocity, glm::vec3(-1) * normal).x << " "<<glm::reflect(this->velocity,  normal).x << std::endl;
+				//this->velocity = glm::reflect(this->velocity, glm::vec3(-1) * normal);// + glm::vec3(0.8)*balls[i].velocity;
+				//balls[i].velocity = glm::reflect(balls[i].velocity,normal); //+glm::vec3(0.8) * tmp;
 				
 				
 				//this->velocity

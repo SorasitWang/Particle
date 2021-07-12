@@ -17,6 +17,7 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow* window);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
@@ -40,6 +41,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -56,7 +58,7 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
-  
+    glfwSetKeyCallback(window, key_callback);
 
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -143,7 +145,20 @@ void processInput(GLFWwindow* window)
 
 }
 
-
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
+    {
+        Shader boxShader = Shader("box.vs", "box.fs");
+        balls.push_back(Ball());
+        balls[balls.size()-1].init(boxShader);
+        balls[balls.size() - 1].position = glm::vec3(0.0f,0.65f,0.0f);
+        balls[balls.size() - 1].velocity.y = -1;
+        balls[balls.size() - 1].isIn = false;
+        numBalls += 1;
+       
+    }
+}
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------

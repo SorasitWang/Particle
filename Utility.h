@@ -26,3 +26,9 @@ glm::vec3 intercept2D(glm::vec3 aVec, glm::vec3 aPos, glm::vec3 bVec,glm::vec3 b
 	float intersection_Y = ma * intersection_X + ca;
 	return glm::vec3(intersection_X, intersection_Y, 0.0f);
 }
+
+int checkSign(float x) {
+	if (x < 0) return -1;
+	if (x > 0) return 1;
+	else return 0;
+}
