@@ -18,6 +18,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow* window,float deltatIme,Shader boxShader);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
@@ -26,12 +27,15 @@ const unsigned int SCR_HEIGHT = 800;
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
+float xPos = 0.0f;
+float yPos = 0.0f;
 bool firstMouse = true;
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
+bool adding = false;
 Box box = Box(0);
 
 int numBalls = 5;
@@ -61,6 +65,7 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetKeyCallback(window, key_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
 
     // tell GLFW to capture our mouse
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -152,13 +157,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 {
     if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
     {
-        Shader boxShader = Shader("box.vs", "box.fs");
-        balls.push_back(Ball());
-        balls[balls.size()-1].init(boxShader);
-        balls[balls.size() - 1].position = glm::vec3(0.0f,0.65f,0.0f);
-        balls[balls.size() - 1].velocity.y = -1;
-        balls[balls.size() - 1].isIn = false;
-        numBalls += 1;
+       
        
     }
 }
@@ -176,7 +175,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 // glfw: whenever the mouse moves, this callback is called
 // -------------------------------------------------------
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+
 {
+    xPos = xpos; yPos = ypos;
+    if (adding) balls[balls.size() - 1].position = glm::vec3(2 * xPos / SCR_WIDTH - 1, 2 * (-yPos / SCR_HEIGHT + 0.5), 0.0f);
     if (firstMouse)
     {
         lastX = xpos;
@@ -190,4 +192,26 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastX = xpos;
     lastY = ypos;
    
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        if (adding == false) {
+            Shader boxShader = Shader("box.vs", "box.fs");
+            balls.push_back(Ball());
+            balls[balls.size() - 1].init(boxShader);
+            balls[balls.size() - 1].position = glm::vec3(2 * xPos / SCR_WIDTH - 1, 2 * (-yPos / SCR_HEIGHT + 0.5), 0.0f);
+            balls[balls.size() - 1].velocity.y = 0;
+            balls[balls.size() - 1].isIn = false;
+            balls[balls.size() - 1].move = false;
+            numBalls += 1;
+            adding = true;
+        }
+    }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+        adding = false;
+        balls[balls.size() - 1].velocity.y = -1;
+        balls[balls.size() - 1].move = true;
+    }
 }

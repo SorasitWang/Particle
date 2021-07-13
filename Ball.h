@@ -32,6 +32,7 @@ public:
 	float acc=0.0f , g=0.01,gVelo = 0.0f;
 	int countOnGround = 0;
 	bool isIn = true;
+	bool move = true;
 	glm::vec3 velocity = glm::vec3(1, 1, 1);
 	glm::vec3 direction = glm::vec3(0.3,0.5,0.0f);
 	//glm::vec3 velocity = glm::vec3(1,1,0);
@@ -87,7 +88,7 @@ public:
 		
 		
 		
-		isColWall(wallBorder);
+		
 		//isColBall(balls, idx,deltaTime);
 		//std::cout << direction.y << std::endl;
 		/*if (check == "UP" || check=="DOWN") {
@@ -99,15 +100,21 @@ public:
 			velocity.x *= 0.8;
 		}*/
 
-		if (isOnGround(wallBorder))
-			velocity.x -= 0.01 * deltaTime;
-		velocity.x = std::max(0.0f, velocity.x);
-		position.y += velocity.y* deltaTime;
-		position.x += direction.x * velocity.x * deltaTime;
-		gVelo += g * deltaTime;
-		velocity.y -= gVelo * deltaTime;
-		direction.y -= gVelo;
-		velocity += acc * deltaTime;
+		
+		if (move == true) {
+			if (isOnGround(wallBorder))
+				velocity.x -= 0.01 * deltaTime;
+
+			isColWall(wallBorder);
+
+			velocity.x = std::max(0.0f, velocity.x);
+			position.y += velocity.y * deltaTime;
+			position.x += direction.x * velocity.x * deltaTime;
+			gVelo += g * deltaTime;
+			velocity.y -= gVelo * deltaTime;
+			direction.y -= gVelo;
+			velocity += acc * deltaTime;
+		}
 		model = glm::translate(model, position);
 		
 		
@@ -146,10 +153,12 @@ private :
 		//std::cout << position.x+radius << " " << right << std::endl;
 		if (isIn == false) {
 			
-			if (position.y + radius <= up) {
+			if (position.y + radius <= up && position.x - radius >= left 
+				&& position.x + radius <= right && position.y - radius >= down) {
 				std::cout << "In" << std::endl;
 				isIn = true;
 			}
+
 			return "";
 		}
 		if (position.x + radius >= right) {

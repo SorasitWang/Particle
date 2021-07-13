@@ -80,7 +80,7 @@ public :
 
 		glm::mat4 model = glm::mat4(1.0f);
 		//model = glm::scale(model, glm::vec3(changeX, changeY, 0.0f));
-		std::cout << changeX << " " << changeY << std::endl;
+		//std::cout << changeX << " " << changeY << std::endl;
 		shader.setMat4("model", model);
 		
 		glBindVertexArray(this->VAO);
