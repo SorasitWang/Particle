@@ -32,3 +32,9 @@ int checkSign(float x) {
 	if (x > 0) return 1;
 	else return 0;
 }
+
+float notNear0(float value, float offset) {
+	if (value <= 0 && value > -offset) return -offset;
+	if (value >= 0 && value < offset) return offset;
+	return value;
+}

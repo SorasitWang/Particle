@@ -16,28 +16,31 @@
 class Box {
 public :
 	Box(float size) {
-		this->size = size;
+		this->sizeX = size; this->sizeY = size;
 	}
 	unsigned int VAO, VBO, EBO;
-	float size = 0.5;
+	float sizeX = 0.5f,sizeY = 0.5f;
+	float changeX =1 ,changeY = 1;
+	float size = 0.5f;
 	float thin = 0.03;
 	float friction = 0.1;
-	
+	float velocity = 0.1f;
+
 	void init(Shader shader) {
 		float vertices[3*8];
 		int index[24];
 
-		vertices[0] = -size;		vertices[1] = -size;		vertices[2] = 0;			//ซ้ายล่าง ใน
-		vertices[3] = -size - thin;	vertices[4] = -size - thin;	vertices[5] = 0;			//ซ้ายล่าง นอก
+		vertices[0] = -sizeX;		vertices[1] = -sizeY;		vertices[2] = 0;			//ซ้ายล่าง ใน
+		vertices[3] = -sizeX - thin;	vertices[4] = -sizeY - thin;	vertices[5] = 0;			//ซ้ายล่าง นอก
 
-		vertices[6] = -size;		vertices[7] = size;			vertices[8] = 0;			//ซ้ายบน ใน
-		vertices[9] = -size - thin;	vertices[10] = size + thin;	vertices[11] = 0;			//ซ้ายบน นอก
+		vertices[6] = -sizeX;		vertices[7] = sizeY;			vertices[8] = 0;			//ซ้ายบน ใน
+		vertices[9] = -sizeX - thin;	vertices[10] = sizeY + thin;	vertices[11] = 0;			//ซ้ายบน นอก
 
-		vertices[12] = size;			vertices[13] = -size;		vertices[14] = 0;			//ขวาล่าง ใน
-		vertices[15] = size + thin;	vertices[16] = -size - thin;	vertices[17] = 0;			//ขวาล่าง นอก
+		vertices[12] = sizeX;			vertices[13] = -sizeY;		vertices[14] = 0;			//ขวาล่าง ใน
+		vertices[15] = sizeX + thin;	vertices[16] = -sizeY - thin;	vertices[17] = 0;			//ขวาล่าง นอก
 
-		vertices[18] = size;			vertices[19] = size;			vertices[20] = 0;			//ขวาบน ใน
-		vertices[21] = size + thin;	vertices[22] = size + thin;	vertices[23] = 0;			//ขวาบน นอก
+		vertices[18] = sizeX;			vertices[19] = sizeY;			vertices[20] = 0;			//ขวาบน ใน
+		vertices[21] = sizeX + thin;	vertices[22] = sizeY + thin;	vertices[23] = 0;			//ขวาบน นอก
 
 		index[0] = 0;		index[1] = 1;	index[2] = 2;			//ซ้าย
 		index[3] = 3;		index[4] = 1;	index[5] = 2;
@@ -72,11 +75,12 @@ public :
 	}
 
 	void draw(Shader shader) {
+	
 		shader.use();
 
 		glm::mat4 model = glm::mat4(1.0f);
-	
-
+		//model = glm::scale(model, glm::vec3(changeX, changeY, 0.0f));
+		std::cout << changeX << " " << changeY << std::endl;
 		shader.setMat4("model", model);
 		
 		glBindVertexArray(this->VAO);
@@ -86,5 +90,25 @@ public :
 		
 	}
 
+
+	void changeSize(float deltaTime,int type,Shader shader) {
+		if (type == 0) {
+			changeX += deltaTime * velocity;
+		}
+		if (type == 1) {
+			changeX -= deltaTime * velocity;
+		}
+		if (type == 2) {
+			changeY += deltaTime * velocity;
+		}
+		if (type == 3) {
+			changeY -= deltaTime * velocity;
+		}
+		
+		sizeX = std::max(0.0f,size * changeX);
+		sizeY = std::max(0.0f, size * changeY);
+
+		this->init(shader);
+	}
 
 };

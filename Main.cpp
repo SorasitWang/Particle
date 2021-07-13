@@ -16,7 +16,7 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void processInput(GLFWwindow* window);
+void processInput(GLFWwindow* window,float deltatIme,Shader boxShader);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 const unsigned int SCR_WIDTH = 800;
@@ -32,7 +32,9 @@ bool firstMouse = true;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
-int numBalls = 2;
+Box box = Box(0);
+
+int numBalls = 5;
 std::vector<Ball> balls;
 int main()
 {
@@ -61,7 +63,7 @@ int main()
     glfwSetKeyCallback(window, key_callback);
 
     // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -75,7 +77,7 @@ int main()
         balls.push_back(Ball());
         balls[i].init(boxShader);
     }
-    Box box = Box(sizeWall);
+    box = Box(sizeWall);
 
    
     box.init(boxShader);
@@ -93,7 +95,7 @@ int main()
 
         // input
         // -----
-        processInput(window);
+        processInput(window,deltaTime,boxShader);
 
        
         // render
@@ -104,9 +106,10 @@ int main()
       
         box.draw(boxShader);
         for (int i = 0; i < numBalls; i++) {
-            balls[i].draw(boxShader, deltaTime, sizeWall,balls,i);
+            balls[i].draw(boxShader, deltaTime, box.sizeX,box.sizeY,balls,i);
+            //std::cout <<i<< "   "<< balls[i].direction.x << " " << balls[i].velocity.y << std::endl;
         }
-
+        //std::cout <<"------------"<< std::endl;
 
         // camera/view transformation
 
@@ -121,25 +124,25 @@ int main()
     return 0;
 }
 
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow* window,float deltaTime,Shader boxShader)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-      
+        box.changeSize(deltaTime, 2, boxShader);
        
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-       
+        box.changeSize(deltaTime, 3, boxShader);
        
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        
+        box.changeSize(deltaTime, 1, boxShader);
     }
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-       
+        box.changeSize(deltaTime, 0, boxShader);
     }
 
 
