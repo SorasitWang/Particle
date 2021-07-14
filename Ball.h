@@ -77,7 +77,7 @@ public:
 
 	void draw(Shader shader,float deltaTime,float sizeWallX,float sizeWallY,std::vector<Ball> balls,int idx) {
 		curTime += deltaTime;
-		//if (curTime > lifeTime) return;
+		if (curTime > lifeTime) return;
 		shader.use();
 
 		glm::mat4 model = glm::mat4(1.0f);
@@ -119,7 +119,9 @@ public:
 		
 		
 		shader.setMat4("model", model);
-
+		shader.setVec3("color", glm::vec3(0.8f, 0.3f, 0.3f));
+		std::cout << 1.0f - (curTime / lifeTime) << std::endl;
+		shader.setFloat("alpha", 1.0f-(curTime/ lifeTime));
 		glBindVertexArray(this->VAO);
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
 		glDrawElements(GL_TRIANGLES, 73*3, GL_UNSIGNED_INT, 0);

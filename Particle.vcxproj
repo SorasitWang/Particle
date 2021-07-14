@@ -157,6 +157,8 @@
     <ClInclude Include="Utility.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ball.fs" />
+    <None Include="ball.vs" />
     <None Include="box.fs" />
     <None Include="box.vs" />
   </ItemGroup>

@@ -84,9 +84,11 @@ int main()
     Shader boxShader = Shader("box.vs", "box.fs");
     float sizeWall = 0.5;
     srand(time(0));
+
+    Shader ballShader = Shader("ball.vs", "ball.fs");
     for (int i = 0; i < numBalls; i++) {
         balls.push_back(Ball());
-        balls[i].init(boxShader);
+        balls[i].init(ballShader);
     }
     box = Box(sizeWall);
 
@@ -95,7 +97,8 @@ int main()
 
 
     glEnable(GL_DEPTH_TEST);
-
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
     while (!glfwWindowShouldClose(window))
@@ -117,7 +120,7 @@ int main()
       
         box.draw(boxShader);
         for (int i = 0; i < numBalls; i++) {
-            balls[i].draw(boxShader, deltaTime, box.sizeX,box.sizeY,balls,i);
+            balls[i].draw(ballShader, deltaTime, box.sizeX,box.sizeY,balls,i);
             //std::cout <<i<< "   "<< balls[i].direction.x << " " << balls[i].velocity.y << std::endl;
         }
         //std::cout <<"------------"<< std::endl;

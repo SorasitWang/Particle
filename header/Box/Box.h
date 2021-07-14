@@ -72,6 +72,10 @@ public :
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
 
+		shader.use();
+		shader.setVec3("color", glm::vec3(0.8f, 0.3f, 0.3f));
+		shader.setFloat("alpha", 1.0f);
+
 	}
 
 	void draw(Shader shader) {

@@ -55,5 +55,11 @@
     <None Include="box.vs">
       <Filter>Header Files\Box</Filter>
     </None>
+    <None Include="ball.fs">
+      <Filter>Header Files\Ball</Filter>
+    </None>
+    <None Include="ball.vs">
+      <Filter>Header Files\Ball</Filter>
+    </None>
   </ItemGroup>
 </Project>
