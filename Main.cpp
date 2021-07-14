@@ -24,12 +24,18 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 
 
-
+//mouse
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 float xPos = 0.0f;
 float yPos = 0.0f;
 bool firstMouse = true;
+float collectTime = 0.15f;
+float slope = 0.0f;
+float oldSlope = 0.0f;
+float countTime = 0.0f;
+std::vector<float> oldPos = { 0.0f,0.0f };
+glm::vec3 direction = glm::vec3(0.0f,0.0f,0.0f);
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -97,7 +103,7 @@ int main()
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
+        countTime += deltaTime;
         // input
         // -----
         processInput(window,deltaTime,boxShader);
@@ -177,7 +183,39 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 {
+   
     xPos = xpos; yPos = ypos;
+    if (adding == true ) {
+        if (oldPos[0] == -1) {
+            oldPos[0] = xPos;
+            oldPos[1] = yPos;
+        }
+        else if(countTime > collectTime){
+            oldPos[0] = xPos;
+            oldPos[1] = yPos;
+            countTime = 0.0f;
+        }
+        countTime += deltaTime;
+    }
+    if (adding == false) {
+        //std::cout << xPos << " " << oldPos[0] << "---" << yPos << " " << oldPos[1] << std::endl;
+        direction.y = yPos - oldPos[1];
+        direction.x = xPos - oldPos[0];
+        oldPos[0] = -1;
+        oldPos[1] = -1;
+    }
+        
+
+        /*if (countTime > collectTime) {
+            //std::cout << countTime << std::endl;
+            
+            countTime = 0.0f;
+            //if (abs(slope - oldSlope) > 0.3) {
+                //oldSlope = slope;
+            
+            //}
+        }
+    }*/
     if (adding) balls[balls.size() - 1].position = glm::vec3(2 * xPos / SCR_WIDTH - 1, 2 * (-yPos / SCR_HEIGHT + 0.5), 0.0f);
     if (firstMouse)
     {
@@ -205,6 +243,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             balls[balls.size() - 1].velocity.y = 0;
             balls[balls.size() - 1].isIn = false;
             balls[balls.size() - 1].move = false;
+           
             numBalls += 1;
             adding = true;
         }
@@ -213,5 +252,17 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         adding = false;
         balls[balls.size() - 1].velocity.y = -1;
         balls[balls.size() - 1].move = true;
+//std::cout << xPos << " " << oldPos[0] << "////" << yPos << " " << oldPos[1] << std::endl;
+       
+        
+        direction.x = xPos - oldPos[0];
+        direction.y = yPos - oldPos[1];
+        if (oldPos[0] == -1)
+            direction.x = 0.0;
+        if (oldPos[1] == -1)
+            direction.y = 0.0;
+        //std::cout << direction.x << " " << SCR_WIDTH << " " << direction.y << " " << SCR_HEIGHT << std::endl;
+        balls[balls.size() - 1].direction.x = 6*direction.x / SCR_WIDTH;
+        balls[balls.size() - 1].velocity.y = -6*direction.y / SCR_HEIGHT;
     }
 }
