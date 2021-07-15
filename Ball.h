@@ -23,9 +23,11 @@ public:
 	Ball() {
 
 	};
+	std::vector<glm::vec3> allColor = { glm::vec3(0.8f, 0.3f, 0.3f) , glm::vec3(0.3f, 0.8f, 0.3f) , glm::vec3(0.3f, 0.3f, 0.8f),
+										glm::vec3(0.6f, 0.6f, 0.2f) ,glm::vec3(0.6f, 0.2f, 0.6f) ,glm::vec3(0.2f, 0.6f, 0.6f) };
 	unsigned int VAO, VBO, EBO;
 	float radius = 0.05;
-	float lifeTime = 5.0f;
+	float lifeTime = 500.0f;
 	float curTime = 0;
 	float veloLost =0.95;
 	float least = 0.1;
@@ -35,6 +37,7 @@ public:
 	bool move = true;
 	glm::vec3 velocity = glm::vec3(1, 1, 1);
 	glm::vec3 direction = glm::vec3(0.3,0.5,0.0f);
+	glm::vec3 color = glm::vec3(0.8f, 0.3f, 0.3f);
 	//glm::vec3 velocity = glm::vec3(1,1,0);
 	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -89,7 +92,7 @@ public:
 		
 		
 		
-		//isColBall(balls, idx,deltaTime);
+		isColBall(balls, idx,deltaTime);
 		//std::cout << direction.y << std::endl;
 		/*if (check == "UP" || check=="DOWN") {
 			//direction.y *= -1;
@@ -119,7 +122,7 @@ public:
 		
 		
 		shader.setMat4("model", model);
-		shader.setVec3("color", glm::vec3(0.8f, 0.3f, 0.3f));
+		shader.setVec3("color", color);
 		std::cout << 1.0f - (curTime / lifeTime) << std::endl;
 		shader.setFloat("alpha", 1.0f-(curTime/ lifeTime));
 		glBindVertexArray(this->VAO);
@@ -140,6 +143,7 @@ private :
 		
 		//this->direction = glm::normalize(this->direction);
 
+		color = allColor[rand() % allColor.size()];
 
 		this->position.x = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
 		this->position.y = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
@@ -197,13 +201,39 @@ private :
 				glm::vec3 link = glm::normalize(glm::vec3(this->position.x- balls[i].position.x , this->position.y - balls[i].position.y,0.0f));
 				glm::vec3 normal = glm::normalize(glm::cross(link, glm::vec3(0.0f, 0.0f, 1.0f)));
 
+
+				
+				glm::vec3 tmpA = glm::normalize(glm::vec3(this->direction.x, this->velocity.y, 0.0f));
+				glm::vec3 tmpB = glm::normalize(glm::vec3(balls[i].direction.x, balls[i].velocity.y, 0.0f));
+
+				//this
+				glm::vec3 reflect = glm::normalize(position- balls[i].position);
+				float sizeThis = direction.x * direction.x + velocity.y * velocity.y;
+				this->direction.x = reflect.x + 1*direction.x;
+				this->velocity.y = reflect.y + 1*velocity.y;
+				float ratio = (direction.x * direction.x + velocity.y * velocity.y)/sizeThis;
+				this->direction.x /= sqrt(ratio);
+				this->velocity.y /= sqrt(ratio);
+
+				//another
+				float sizeAnother = balls[i].direction.x * balls[i].direction.x + balls[i].velocity.y * balls[i].velocity.y;
+				balls[i].direction.x = -reflect.x + 1*balls[i].direction.x;
+				balls[i].velocity.y = -reflect.y + 1*balls[i].velocity.y;
+				ratio = (balls[i].direction.x * balls[i].direction.x + balls[i].velocity.y * balls[i].velocity.y) / sizeAnother;
+				balls[i].direction.x /= sqrt(ratio);
+				balls[i].velocity.y /= sqrt(ratio);
+
+				/*glm::vec3 tmpA = glm::normalize(glm::vec3(this->direction.x, this->velocity.y, 0.0f));
+				glm::vec3 tmpB = glm::normalize(glm::vec3(balls[i].direction.x, balls[i].velocity.y, 0.0f));
+				this->velocity.y = tmpA.y; this->direction.x = tmpA.x;
+				balls[i].velocity.y = tmpB.y; balls[i].direction.x = tmpB.x;*/
+
+				
+				/*
 				glm::vec3 interceptThis = intercept2D(glm::vec3(direction.x,velocity.y,0.0f), this->position, 
 										normal, glm::vec3((this->position.x + balls[i].position.x)/2, (this->position.y + balls[i].position.y) / 2,0.0f));
 				//std::cout << intercept.x << " " << intercept.y << std::endl;
-				/*if vector direction WILL intercept with middle plane => apply bounce
-				when use center of ball as origin 
-				if intercept point in qurant which associater with vector Ex (+,-):(+,-)  ,  (+,0):(+,0)*/
-					//bounce is reflect with normal
+
 				glm::vec3 x = glm::vec3(this->direction.x, this->velocity.y, 0.0f);
 				this->velocity.y = notNear0(-this->velocity.y + 1.3*balls[i].velocity.y, least); this->direction.x = notNear0(-this->direction.x + 1.3 * balls[i].direction.x, least);
 				balls[i].velocity.y = notNear0(-balls[i].velocity.y + 1.3 * x.y,least); balls[i].direction.x = notNear0(-balls[i].direction.x + 1.3 * x.x, least);
@@ -271,7 +301,7 @@ private :
 					this->position += this->velocity * deltaTime;
 					balls[i].position += balls[i].velocity * deltaTime;
 				}*/
-				//return;
+				//return;*/
 			}
 		}
 

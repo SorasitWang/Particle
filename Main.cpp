@@ -44,7 +44,7 @@ float lastFrame = 0.0f;
 bool adding = false;
 Box box = Box(0);
 
-int numBalls = 5;
+int numBalls = 10;
 std::vector<Ball> balls;
 int main()
 {

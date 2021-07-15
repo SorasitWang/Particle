@@ -73,7 +73,7 @@ public :
 		glEnableVertexAttribArray(0);
 
 		shader.use();
-		shader.setVec3("color", glm::vec3(0.8f, 0.3f, 0.3f));
+		shader.setVec3("color", glm::vec3(0.0f, 0.0f, 0.0f));
 		shader.setFloat("alpha", 1.0f);
 
 	}
