@@ -19,11 +19,11 @@ public :
 		this->sizeX = size; this->sizeY = size;
 	}
 	unsigned int VAO, VBO, EBO;
-	float sizeX = 0.5f,sizeY = 0.5f;
+	float sizeX = 0.5f, sizeY = 0.5f,sizeZ=0.5f;
 	float changeX =1 ,changeY = 1;
+	float sizeRat = 1;
 	float size = 0.5f;
 	float thin = 0.03;
-	float friction = 0.1;
 	float velocity = 0.1f;
 
 	void init(Shader shader) {
@@ -78,17 +78,53 @@ public :
 
 	}
 
-	void draw(Shader shader) {
+	void draw(Shader shader,glm::mat4 projection, glm::mat4 view) {
 	
 		shader.use();
 
 		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(sizeRat));
 		//model = glm::scale(model, glm::vec3(changeX, changeY, 0.0f));
 		//std::cout << changeX << " " << changeY << std::endl;
 		shader.setMat4("model", model);
-		
+		shader.setMat4("projection", projection);
+		shader.setMat4("view", view);
 		glBindVertexArray(this->VAO);
+		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
 
+
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(sizeRat));
+		model = glm::translate(model, glm::vec3(0.5f+thin , 0.0f, 0.5f + thin));
+		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		shader.setMat4("model", model);
+		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
+
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(sizeRat));
+		model = glm::translate(model, glm::vec3(-0.5f-thin, 0.0f, 0.5f + thin));
+		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		shader.setMat4("model", model);
+		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
+
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(sizeRat));
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f,1.f+thin));
+		shader.setMat4("model", model);
+		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
+
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(sizeRat));
+		model = glm::translate(model, glm::vec3(0.0f, 0.5f + thin, 0.5f + thin));
+		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		shader.setMat4("model", model);
+		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
+
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(sizeRat));
+		model = glm::translate(model, glm::vec3(0.0f, -0.5f-thin, 0.5f + thin));
+		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		shader.setMat4("model", model);
 		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 		
@@ -96,6 +132,7 @@ public :
 
 
 	void changeSize(float deltaTime,int type,Shader shader) {
+		changeX = 0;
 		if (type == 0) {
 			changeX += deltaTime * velocity;
 		}
@@ -108,11 +145,11 @@ public :
 		if (type == 3) {
 			changeY -= deltaTime * velocity;
 		}
-		
-		sizeX = std::max(0.0f,size * changeX);
+		std::cout << sizeRat << " " <<changeX<< std::endl;
+		sizeRat = std::max(0.0f,1+ changeX*1000);
 		sizeY = std::max(0.0f, size * changeY);
 
-		this->init(shader);
+		//this->init(shader);
 	}
 
 };

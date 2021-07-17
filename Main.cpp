@@ -61,7 +61,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 
-
+ballProperty ballProp;
 //mouse
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -81,8 +81,8 @@ float lastFrame = 0.0f;
 
 bool adding = false;
 Box box = Box(0);
-
-int numBalls = 10;
+Camera cam = Camera();
+int numBalls = 1;
 std::vector<Ball> balls;
 int main()
 {
@@ -110,7 +110,7 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
-
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     // tell GLFW to capture our mouse
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -126,7 +126,7 @@ int main()
     Shader ballShader = Shader("ball.vs", "ball.fs");
     for (int i = 0; i < numBalls; i++) {
         balls.push_back(Ball());
-        balls[i].init(ballShader);
+        balls[i].init(ballShader,ballProp);
     }
     box = Box(sizeWall);
 
@@ -168,16 +168,6 @@ int main()
         processInput(window,deltaTime,boxShader);
 
        
-        // render
-        // ------
-        //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-      
-       
-        //std::cout <<"------------"<< std::endl;
-
-        // camera/view transformation
         if(show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
@@ -186,21 +176,19 @@ int main()
             static float f = 0.0f;
             static int counter = 0;
 
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+            ImGui::Begin("Settings!");                          // Create a window called "Hello, world!" and append into it.
 
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
+            ImGui::Text("Movement Property");               // Display some text (you can use a format strings too)
+            //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            //ImGui::Checkbox("Another Window", &show_another_window);
 
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+            ImGui::SliderFloat("Friction", &ballProp.friction, 0.0f, 1.0f);
+            ImGui::SliderFloat("LifeTime", &ballProp.lifeTime, 3.0f, 60.0f);    
+            ImGui::SliderFloat("G", &ballProp.g, -1.0f, 1.0f); 
+            ImGui::SliderFloat("VelocityLost", &ballProp.velocityLost, 0.0f, 1.0f); 
+           
 
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+           ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
 
@@ -221,10 +209,17 @@ int main()
         
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+
+        glm::mat4 projection = glm::perspective(glm::radians(cam.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = cam.GetViewMatrix();
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        box.draw(boxShader);
+
+        box.draw(boxShader,projection,view);
         for (int i = 0; i < numBalls; i++) {
-            balls[i].draw(ballShader, deltaTime, box.sizeX, box.sizeY, balls, i);
+            balls[i].draw(ballShader, deltaTime, box.sizeX, box.sizeY, balls, i, projection, view, ballProp);
             //std::cout <<i<< "   "<< balls[i].direction.x << " " << balls[i].velocity.y << std::endl;
         }
         glfwSwapBuffers(window);
@@ -260,6 +255,20 @@ void processInput(GLFWwindow* window,float deltaTime,Shader boxShader)
         box.changeSize(deltaTime, 0, boxShader);
     }
 
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) 
+        cam.ProcessKeyboard(FORWARD, deltaTime);
+        
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) 
+        cam.ProcessKeyboard(BACKWARD, deltaTime);
+        
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        cam.ProcessKeyboard(LEFT, deltaTime);
+
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)     
+        cam.ProcessKeyboard(RIGHT, deltaTime);
 
 }
 
@@ -333,7 +342,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
     lastX = xpos;
     lastY = ypos;
-   
+    cam.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -342,7 +351,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         if (adding == false) {
             Shader boxShader = Shader("box.vs", "box.fs");
             balls.push_back(Ball());
-            balls[balls.size() - 1].init(boxShader);
+            balls[balls.size() - 1].init(boxShader, ballProp);
             balls[balls.size() - 1].position = glm::vec3(2 * xPos / SCR_WIDTH - 1, 2 * (-yPos / SCR_HEIGHT + 0.5), 0.0f);
             balls[balls.size() - 1].velocity.y = 0;
             balls[balls.size() - 1].isIn = false;
@@ -369,4 +378,13 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         balls[balls.size() - 1].direction.x = 6*direction.x / SCR_WIDTH;
         balls[balls.size() - 1].velocity.y = -6*direction.y / SCR_HEIGHT;
     }
+}
+
+
+
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    cam.ProcessMouseScroll(yoffset);
 }
