@@ -16,10 +16,11 @@
 #include <time.h>
 #include "Utility.h"
 struct ballProperty {
-	float velocityLost = 0.05;
-	float g = 0.01;;
-	float lifeTime = 20;
-	float friction = 0.01;
+	float velocityLostWall = 0.05f;
+	float g = 0.01f;
+	float velocityLostBump = 0.0f;
+	float lifeTime = 120.0f;
+	float friction = 0.01f;
 };
 const int Y_SEGMENTS = 50;
 const int X_SEGMENTS = 50;
@@ -35,16 +36,17 @@ public:
 	std::vector<glm::vec3> allColor = { glm::vec3(0.8f, 0.3f, 0.3f) , glm::vec3(0.3f, 0.8f, 0.3f) , glm::vec3(0.3f, 0.3f, 0.8f),
 										glm::vec3(0.6f, 0.6f, 0.2f) ,glm::vec3(0.6f, 0.2f, 0.6f) ,glm::vec3(0.2f, 0.6f, 0.6f) };
 	unsigned int VAO, VBO, EBO;
-	float radius = 0.1;
+	float radius = 0.07;
 	float lifeTime = 500.0f;
 	float curTime = 0;
-	float veloLost =0.95;
-	float least = 0.1;
+	float veloLostWall =0.95;
+	float veloLostBump = 0.0f;
 	float friction = 0.01;
 	float g=0.01,gVelo = 0.0f;
 	int countOnGround = 0;
 	bool isIn = true;
 	bool move = true;
+	bool threeD = false;
 	glm::vec3 velocity = glm::vec3(1, 1, 1);
 	glm::vec3 direction = glm::vec3(0.3,0.5,0.0f);
 	glm::vec3 color = glm::vec3(0.8f, 0.3f, 0.3f);
@@ -53,11 +55,12 @@ public:
 
 
 
-	void init(Shader shader, ballProperty prop) {
-
+	void init(Shader shader, ballProperty prop,bool threeD,std::vector<Ball> balls) {
+		this->threeD = threeD;
 		lifeTime = prop.lifeTime;
 		g = prop.g;
-		veloLost = 1 - prop.velocityLost;
+		veloLostWall = 1 - prop.velocityLostWall;
+		veloLostBump = 1 - prop.velocityLostBump;
 		friction = prop.friction;
 
 		std::vector<float> sphereVertices;
@@ -108,7 +111,7 @@ public:
 			idx += 3;
 		}
 		
-		setRand();
+		setRand(balls);
 		
 		
 		glGenVertexArrays(1, &this->VAO);
@@ -131,11 +134,13 @@ public:
 		
 	}
 
-	void draw(Shader shader,float deltaTime,float sizeWallX,float sizeWallY,std::vector<Ball> balls,int idx,glm::mat4 projection,glm::mat4 view,ballProperty prop) {
+	void draw(Shader shader,float deltaTime,float sizeWallX,float sizeWallY,
+				std::vector<Ball> balls,int idx,glm::mat4 projection,glm::mat4 view,ballProperty prop) {
 		
 		friction = prop.friction;
 		g = prop.g;
-		veloLost = 1 - prop.velocityLost;
+		veloLostWall = 1 - prop.velocityLostWall;
+		veloLostBump = 1 - prop.velocityLostBump;
 		
 		curTime += deltaTime;
 		if (curTime > lifeTime) return;
@@ -150,7 +155,7 @@ public:
 		
 		
 		
-		isColBall(balls, idx,deltaTime);
+		isColBall(balls, idx);
 		//std::cout << direction.y << std::endl;
 		/*if (check == "UP" || check=="DOWN") {
 			//direction.y *= -1;
@@ -171,17 +176,18 @@ public:
 			velocity.x = std::max(0.0f, velocity.x);
 			position.y += velocity.y * deltaTime;
 			position.x += direction.x * velocity.x * deltaTime;
-			position.z += direction.z * velocity.z * deltaTime;
+			if(threeD) position.z += direction.z * velocity.z * deltaTime;
 			gVelo += g * deltaTime;
 			velocity.y -= gVelo * deltaTime;
 			direction.y -= gVelo;
 		}
-		model = glm::translate(model, position);
-		model = glm::scale(model, glm::vec3(0.1f));
+		model = glm::translate(model, glm::vec3(position.x,position.y,position.z*threeD));
+		model = glm::scale(model, glm::vec3(radius));
 		
 		shader.setMat4("model", model);
 		shader.setMat4("projection", projection);
 		shader.setMat4("view", view);
+		shader.setBool("threeD", threeD);
 		shader.setVec3("color", color);
 		//std::cout << 1.0f - (curTime / lifeTime) << std::endl;
 		shader.setFloat("alpha", 1.0f-(curTime/ lifeTime));
@@ -197,18 +203,21 @@ public:
 
 private :
 
-	void setRand() {
+	void setRand(std::vector<Ball> balls) {
+		do {
+			this->position.x = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
+			this->position.y = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
+			if (threeD) this->position.z = glm::clamp(((float)rand() / RAND_MAX), 0.015f, 0.985f);
+		} while (isColBall(balls, balls.size() - 1));
 		rand();
 		this->direction.x = ((float)rand() / RAND_MAX) - 0.5;
 		this->direction.y = ((float)rand() / RAND_MAX) - 0.5;
-		this->direction.z = ((float)rand() / RAND_MAX) - 0.5;
+		if (threeD) this->direction.z = ((float)rand() / RAND_MAX) - 0.5;
 		//this->direction = glm::normalize(this->direction);
 
 		color = allColor[rand() % allColor.size()];
 
-		this->position.x = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
-		this->position.y = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
-		this->position.z = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
+		
 
 		this->direction = glm::normalize(direction);
 		//this->directionX = this->velocity.x;
@@ -232,43 +241,47 @@ private :
 		if (position.x + radius >= right) {
 			position.x = right - radius;
 			direction.x *= -1;
-			velocity.x *= veloLost;
+			velocity.x *= veloLostWall;
 			//return "RIGHT";
 		}
 		if (position.x - radius <= left) {
 			position.x = left + radius;
 			direction.x *= -1;
-			velocity.x *= veloLost;
+			velocity.x *= veloLostWall;
 			//return "LEFT";
 		}
 		if (position.y + radius >= up) {
 			position.y = up - radius;
-			velocity.y *= -veloLost;
+			velocity.y *= -veloLostWall;
 			
 			//return "UP";
 		}
 		if (position.y - radius <= down) {
 			position.y = down + radius;
-			velocity.y *= -veloLost;
+			velocity.y *= -veloLostWall;
 			//return "DOWN";
 		}
-		if (position.z - radius <= 0) {
-			position.z = 0 + radius;
-			direction.z *= -1;
-			velocity.z *= veloLost;
-		}
-		if (position.z + radius >= 2 * right) {
-			position.z = 2 * right - radius;
-			direction.z *= -1;
-			velocity.z *= veloLost;
-			//return "LET";
+		if (threeD) {
+			if (position.z - radius <= 0) {
+				position.z = 0 + radius;
+				direction.z *= -1;
+				velocity.z *= veloLostWall;
+			}
+			if (position.z + radius >= 2 * right) {
+				position.z = 2 * right - radius;
+				direction.z *= -1;
+				velocity.z *= veloLostWall;
+				//return "LET";
+			}
 		}
 		return "";
 	}
 
-	void isColBall(std::vector<Ball> balls, int idx,float deltaTime) {
+	bool isColBall(std::vector<Ball> balls, int idx) {
+		
+		bool re = false;
 		for (int i = 0; i < balls.size(); i++) {
-			if (collapse(balls[i].position) && idx != i) {
+			if (collapse(balls[i].position) && idx != i && balls[i].curTime <= balls[i].lifeTime) {
 				//std::cout << "this " << position.x << " " << position.y << " / "<<direction.x << " " << velocity.y <<std::endl;
 				//std::cout << "ball " << balls[i].position.x << " " << balls[i].position.y << " / " << balls[i].direction.x << " " << balls[i].velocity.y << std::endl;
 				glm::vec3 link = glm::normalize(glm::vec3(this->position.x- balls[i].position.x , this->position.y - balls[i].position.y, this->position.z - balls[i].position.z));
@@ -276,117 +289,43 @@ private :
 
 
 				
-				glm::vec3 tmpA = glm::normalize(glm::vec3(this->direction.x, this->velocity.y, this->direction.z));
-				glm::vec3 tmpB = glm::normalize(glm::vec3(balls[i].direction.x, balls[i].velocity.y, balls[i].direction.z));
+				glm::vec3 tmpA = glm::normalize(glm::vec3(this->direction.x, this->velocity.y, this->direction.z*threeD));
+				glm::vec3 tmpB = glm::normalize(glm::vec3(balls[i].direction.x, balls[i].velocity.y, balls[i].direction.z * threeD));
 
 				//this
+				//std::cout << veloLost << std::endl;
 				glm::vec3 reflect = glm::normalize(position- balls[i].position);
-				float sizeThis = direction.x * direction.x + velocity.y * velocity.y + direction.z * direction.z;
-				this->direction.x = reflect.x + 1*direction.x;
-				this->velocity.y = reflect.y + 1*velocity.y;
-				this->direction.z = reflect.z + direction.z;
-				float ratio = (direction.x * direction.x + velocity.y * velocity.y + direction.z*direction.z)/sizeThis;
-				this->direction.x /= sqrt(ratio);
-				this->velocity.y /= sqrt(ratio);
-				this->direction.z /= sqrt(ratio);
+				float sizeThis = direction.x * direction.x + velocity.y * velocity.y + direction.z * direction.z * threeD;
+				this->direction.x = (reflect.x + 1*direction.x);
+				this->velocity.y =  (reflect.y + 1*velocity.y);
+				if (threeD) this->direction.z = (reflect.z + direction.z);
+				float ratio = (direction.x * direction.x + velocity.y * velocity.y + direction.z*direction.z*threeD)/sizeThis;
+				this->direction.x /= sqrt(ratio / veloLostBump);
+				this->velocity.y /=  sqrt(ratio / veloLostBump);
+				if (threeD) this->direction.z /= sqrt(ratio);
 
 				//another
-				float sizeAnother = balls[i].direction.x * balls[i].direction.x + balls[i].velocity.y * balls[i].velocity.y + balls[i].direction.z * balls[i].direction.z;
-				balls[i].direction.x = -reflect.x + 1 * balls[i].direction.x;
-				balls[i].velocity.y = -reflect.y + 1*balls[i].velocity.y;
-				balls[i].direction.z = -reflect.z + 1 * balls[i].direction.z;
-				ratio = (balls[i].direction.x * balls[i].direction.x + balls[i].velocity.y * balls[i].velocity.y + balls[i].direction.z * balls[i].direction.z) / sizeAnother;
-				balls[i].direction.x /= sqrt(ratio);
-				balls[i].velocity.y /= sqrt(ratio);
-				balls[i].direction.z /= sqrt(ratio);
+				float sizeAnother = balls[i].direction.x * balls[i].direction.x + balls[i].velocity.y * balls[i].velocity.y 
+									+ balls[i].direction.z * balls[i].direction.z * threeD;
+				balls[i].direction.x = (-reflect.x + 1 * balls[i].direction.x);
+				balls[i].velocity.y = (-reflect.y + 1*balls[i].velocity.y);
+				if (threeD)balls[i].direction.z = (-reflect.z + 1 * balls[i].direction.z);
+				ratio = (balls[i].direction.x * balls[i].direction.x + balls[i].velocity.y * balls[i].velocity.y
+						+ balls[i].direction.z * balls[i].direction.z * threeD) / sizeAnother;
+				balls[i].direction.x /= sqrt(ratio / veloLostBump);
+				balls[i].velocity.y /= sqrt(ratio / veloLostBump);
+				if (threeD) balls[i].direction.z /= sqrt(ratio);
 
-				/*glm::vec3 tmpA = glm::normalize(glm::vec3(this->direction.x, this->velocity.y, 0.0f));
-				glm::vec3 tmpB = glm::normalize(glm::vec3(balls[i].direction.x, balls[i].velocity.y, 0.0f));
-				this->velocity.y = tmpA.y; this->direction.x = tmpA.x;
-				balls[i].velocity.y = tmpB.y; balls[i].direction.x = tmpB.x;*/
-
-				
-				/*
-				glm::vec3 interceptThis = intercept2D(glm::vec3(direction.x,velocity.y,0.0f), this->position, 
-										normal, glm::vec3((this->position.x + balls[i].position.x)/2, (this->position.y + balls[i].position.y) / 2,0.0f));
-				//std::cout << intercept.x << " " << intercept.y << std::endl;
-
-				glm::vec3 x = glm::vec3(this->direction.x, this->velocity.y, 0.0f);
-				this->velocity.y = notNear0(-this->velocity.y + 1.3*balls[i].velocity.y, least); this->direction.x = notNear0(-this->direction.x + 1.3 * balls[i].direction.x, least);
-				balls[i].velocity.y = notNear0(-balls[i].velocity.y + 1.3 * x.y,least); balls[i].direction.x = notNear0(-balls[i].direction.x + 1.3 * x.x, least);
-
-				glm::vec3 tmpA = glm::normalize(glm::vec3(this->direction.x, this->velocity.y, 0.0f));
-				glm::vec3 tmpB = glm::normalize(glm::vec3(balls[i].direction.x, balls[i].velocity.y, 0.0f));
-				this->velocity.y = tmpA.y; this->direction.x = tmpA.x;
-				balls[i].velocity.y = tmpB.y; balls[i].direction.x = tmpB.x;
-
-				/*continue;
-
-				if (checkSign(interceptThis.x - position.x) == (checkSign(direction.x)) && checkSign(interceptThis.y - position.y) == (checkSign(velocity.y))) {
-					glm::vec3 a = glm::reflect(glm::vec3(direction.x,velocity.y,0.0f), link);
-					std::cout << "1 This" << std::endl;
-					 this->velocity.y = a.y; this->direction.x = a.x;
-					 //glm::vec3 b = balls[i].velocity = glm::reflect(balls[i].velocity, normal); //+glm::vec3(0.8) * tmp;
-					//balls[i].velocity.y = b.y; balls[i].direction.x = b.x;
-				}
-				else if (checkSign(interceptThis.x - position.x) == -1 * (checkSign(direction.x)) && checkSign(interceptThis.y - position.y) == -1 * (checkSign(velocity.y))) {
-					std::cout << "2 This" << std::endl;
-					this->velocity.y = -this->velocity.y; this->direction.x = -this->direction.x;
-					//glm::vec3 a = glm::vec3(direction.x, velocity.y, 0.0f) + glm::vec3(balls[i].direction.x, balls[i].velocity.y, 0.0f);
-					//this->velocity.y = a.y; this->direction.x = a.x;
-				}
-
-				glm::vec3 interceptAnother = intercept2D(glm::vec3(balls[i].direction.x, balls[i].velocity.y, 0.0f), balls[i].position,
-					normal, glm::vec3((this->position.x + balls[i].position.x) / 2, (this->position.y + balls[i].position.y) / 2, 0.0f));
-				
-
-				if (checkSign(interceptAnother.x - balls[i].position.x) == (checkSign(balls[i].direction.x)) && checkSign(interceptAnother.y - balls[i].position.y) == (checkSign(balls[i].velocity.y))) {
-					std::cout << "1 Another" << std::endl;
-					glm::vec3 b = glm::reflect(glm::vec3(balls[i].direction.x, balls[i].velocity.y, 0.0f), link);
-					balls[i].velocity.y = b.y; balls[i].direction.x = b.x;
-				}
-
-				else if (checkSign(interceptAnother.x - balls[i].position.x) == -1 * (checkSign(balls[i].direction.x)) && checkSign(interceptAnother.y - balls[i].position.y) == -1 * (checkSign(balls[i].velocity.y))) {
-					std::cout << "2 Another" << std::endl;
-					balls[i].velocity.y = -balls[i].velocity.y; balls[i].direction.x = -balls[i].direction.x;
-					//glm::vec3 b = glm::vec3(direction.x, velocity.y, 0.0f) + glm::vec3(balls[i].direction.x, balls[i].velocity.y, 0.0f);
-					//balls[i].velocity.y = b.y; balls[i].direction.x = b.x;
-				}
-
-				else if ALREADY interept => apply collision
-				if intercept point in qurant which oppoite with vector Ex (+, -):(-, +)  ,  (+, 0):(-, 0)*/
-					//collision is combined both vector by add Or reflect in some ways
-				
-
-				//else if never intercept (pararelle) => do nothing
-				
-				
-				//std::cout << glm::reflect(this->velocity, glm::vec3(-1) * normal).x << " "<<glm::reflect(this->velocity,  normal).x << std::endl;
-				//this->velocity = glm::reflect(this->velocity, glm::vec3(-1) * normal);// + glm::vec3(0.8)*balls[i].velocity;
-				//balls[i].velocity = glm::reflect(balls[i].velocity,normal); //+glm::vec3(0.8) * tmp;
-				
-				
-				//this->velocity
-				/*glm::vec3 tmpA = glm::normalize(glm::vec3(this->direction.x,this->velocity.y,0.0f));
-				glm::vec3 tmpB = glm::normalize(glm::vec3(balls[i].direction.x, balls[i].velocity.y, 0.0f));
-				this->velocity.y = tmpA.y; this->direction.x = tmpA.x;
-				balls[i].velocity.y = tmpB.y; balls[i].direction.x = tmpB.x;*/
-
-				/*this->position += glm::vec3(3)*this->velocity * deltaTime;
-				balls[i].position += glm::vec3(3) * balls[i].velocity * deltaTime;*/
-				/*while (collapse(balls[i].position)) {
-					this->position += this->velocity * deltaTime;
-					balls[i].position += balls[i].velocity * deltaTime;
-				}*/
-				//return;*/
+				re = true;
 			}
 		}
+		return re;
 
 	}
 
 	float collapse(glm::vec3 pos2) {
 		//std::cout << sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2)) << std::endl;
-		return sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2) + pow(this->position.z - pos2.z, 2)) <= 2.0*this->radius;
+		return sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2) + pow(this->position.z-pos2.z,2)*threeD )<= 2.0*this->radius;
 	}
 
 	bool isOnGround(std::vector<float> wallBorder) {

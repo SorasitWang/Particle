@@ -69,9 +69,8 @@ float xPos = 0.0f;
 float yPos = 0.0f;
 bool firstMouse = true;
 float collectTime = 0.15f;
-float slope = 0.0f;
-float oldSlope = 0.0f;
 float countTime = 0.0f;
+bool threeD = false;
 std::vector<float> oldPos = { 0.0f,0.0f };
 glm::vec3 direction = glm::vec3(0.0f,0.0f,0.0f);
 
@@ -82,7 +81,8 @@ float lastFrame = 0.0f;
 bool adding = false;
 Box box = Box(0);
 Camera cam = Camera();
-int numBalls = 1;
+
+int numBalls = 8;
 std::vector<Ball> balls;
 int main()
 {
@@ -110,7 +110,8 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     // tell GLFW to capture our mouse
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -126,12 +127,12 @@ int main()
     Shader ballShader = Shader("ball.vs", "ball.fs");
     for (int i = 0; i < numBalls; i++) {
         balls.push_back(Ball());
-        balls[i].init(ballShader,ballProp);
+        balls[i].init(ballShader,ballProp,threeD,balls);
     }
     box = Box(sizeWall);
 
    
-    box.init(boxShader);
+    box.init(boxShader,threeD);
 
 
     glEnable(GL_DEPTH_TEST);
@@ -179,14 +180,14 @@ int main()
             ImGui::Begin("Settings!");                          // Create a window called "Hello, world!" and append into it.
 
             ImGui::Text("Movement Property");               // Display some text (you can use a format strings too)
-            //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            ImGui::Checkbox("Open 3D mode", &threeD);      // Edit bools storing our window open/close state
             //ImGui::Checkbox("Another Window", &show_another_window);
 
             ImGui::SliderFloat("Friction", &ballProp.friction, 0.0f, 1.0f);
             ImGui::SliderFloat("LifeTime", &ballProp.lifeTime, 3.0f, 60.0f);    
             ImGui::SliderFloat("G", &ballProp.g, -1.0f, 1.0f); 
-            ImGui::SliderFloat("VelocityLost", &ballProp.velocityLost, 0.0f, 1.0f); 
-           
+            ImGui::SliderFloat("VelocityLostWall", &ballProp.velocityLostWall, 0.0f, 0.99f); 
+            ImGui::SliderFloat("VelocityLostBump", &ballProp.velocityLostBump, 0.0f, 0.99f);
 
            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
@@ -277,7 +278,16 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
     {
        
-       
+        threeD = !threeD;
+        std::cout << threeD;
+        Shader ballShader = Shader("ball.vs", "ball.fs");
+        Shader boxShader = Shader("box.vs", "box.fs");
+        box.init(boxShader, threeD);
+        for (int i = 0; i < numBalls; i++) {
+            balls.push_back(Ball());
+            balls[i].init(ballShader, ballProp, threeD,balls);
+        }
+
     }
 }
 
@@ -351,7 +361,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         if (adding == false) {
             Shader boxShader = Shader("box.vs", "box.fs");
             balls.push_back(Ball());
-            balls[balls.size() - 1].init(boxShader, ballProp);
+            balls[balls.size() - 1].init(boxShader, ballProp,threeD,balls);
             balls[balls.size() - 1].position = glm::vec3(2 * xPos / SCR_WIDTH - 1, 2 * (-yPos / SCR_HEIGHT + 0.5), 0.0f);
             balls[balls.size() - 1].velocity.y = 0;
             balls[balls.size() - 1].isIn = false;
@@ -361,6 +371,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             adding = true;
         }
     }
+
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
         adding = false;
         balls[balls.size() - 1].velocity.y = -1;

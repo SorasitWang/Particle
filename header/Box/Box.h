@@ -25,8 +25,10 @@ public :
 	float size = 0.5f;
 	float thin = 0.03;
 	float velocity = 0.1f;
+	bool threeD = false;
 
-	void init(Shader shader) {
+	void init(Shader shader,bool threeD) {
+		this->threeD = threeD;
 		float vertices[3*8];
 		int index[24];
 
@@ -89,6 +91,7 @@ public :
 		shader.setMat4("model", model);
 		shader.setMat4("projection", projection);
 		shader.setMat4("view", view);
+		shader.setBool("threeD", threeD);
 		glBindVertexArray(this->VAO);
 		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
 
