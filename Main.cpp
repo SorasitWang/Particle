@@ -74,6 +74,7 @@ bool threeD = false;
 std::vector<float> oldPos = { 0.0f,0.0f };
 glm::vec3 direction = glm::vec3(0.0f,0.0f,0.0f);
 
+bool edit = false;
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
@@ -113,7 +114,7 @@ int main()
 
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     // tell GLFW to capture our mouse
-    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -179,8 +180,12 @@ int main()
 
             ImGui::Begin("Settings!");                          // Create a window called "Hello, world!" and append into it.
 
-            ImGui::Text("Movement Property");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Open 3D mode", &threeD);      // Edit bools storing our window open/close state
+            ImGui::Text("Movement Property");   
+            ImGui::Text("TAB to change Dimension Mode");
+            ImGui::Text("SPACE to change Edit Mode");
+            // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Open 3D mode", &threeD);
+            ImGui::Checkbox("Open Edit mode", &edit);// Edit bools storing our window open/close state
             //ImGui::Checkbox("Another Window", &show_another_window);
 
             ImGui::SliderFloat("Friction", &ballProp.friction, 0.0f, 1.0f);
@@ -220,7 +225,7 @@ int main()
 
         box.draw(boxShader,projection,view);
         for (int i = 0; i < numBalls; i++) {
-            balls[i].draw(ballShader, deltaTime, box.sizeX, box.sizeY, balls, i, projection, view, ballProp);
+            balls[i].draw(ballShader, deltaTime, box.sizeX, box.sizeY,box.sizeZ, balls, i, projection, view, ballProp);
             //std::cout <<i<< "   "<< balls[i].direction.x << " " << balls[i].velocity.y << std::endl;
         }
         glfwSwapBuffers(window);
@@ -256,6 +261,13 @@ void processInput(GLFWwindow* window,float deltaTime,Shader boxShader)
         box.changeSize(deltaTime, 0, boxShader);
     }
 
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        box.changeSize(deltaTime, 4, boxShader);
+    }
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+        box.changeSize(deltaTime, 5, boxShader);
+    }
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
@@ -287,6 +299,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             balls.push_back(Ball());
             balls[i].init(ballShader, ballProp, threeD,balls);
         }
+
+    }
+
+
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+    {
+
+        edit = !edit;
+        if (!edit) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+        else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+
 
     }
 }
@@ -358,11 +385,11 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-        if (adding == false) {
+        if (adding == false && threeD == false) {
             Shader boxShader = Shader("box.vs", "box.fs");
             balls.push_back(Ball());
             balls[balls.size() - 1].init(boxShader, ballProp,threeD,balls);
-            balls[balls.size() - 1].position = glm::vec3(2 * xPos / SCR_WIDTH - 1, 2 * (-yPos / SCR_HEIGHT + 0.5), 0.0f);
+            balls[balls.size() - 1].position = glm::vec3(2 * xPos / SCR_WIDTH - 1, 2 * (-yPos / SCR_HEIGHT + 0.5), 0.5f);
             balls[balls.size() - 1].velocity.y = 0;
             balls[balls.size() - 1].isIn = false;
             balls[balls.size() - 1].move = false;

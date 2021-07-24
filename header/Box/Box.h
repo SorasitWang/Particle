@@ -16,7 +16,7 @@
 class Box {
 public :
 	Box(float size) {
-		this->sizeX = size; this->sizeY = size;
+		this->sizeX = size; this->sizeY = size; this->sizeZ = size;
 	}
 	unsigned int VAO, VBO, EBO;
 	float sizeX = 0.5f, sizeY = 0.5f,sizeZ=0.5f;
@@ -24,14 +24,25 @@ public :
 	float sizeRat = 1;
 	float size = 0.5f;
 	float thin = 0.03;
+	int n;
 	float velocity = 0.1f;
 	bool threeD = false;
 
 	void init(Shader shader,bool threeD) {
 		this->threeD = threeD;
 		float vertices[3*8];
-		int index[24];
+		//int index[24];
+		vertices[0] = -sizeX; vertices[1] = sizeY; vertices[2] = -sizeZ;
+		vertices[3] =  sizeX; vertices[4] = sizeY; vertices[5] = -sizeZ;
+		vertices[6] =  sizeX; vertices[7] = -sizeY; vertices[8] = -sizeZ;
+		vertices[9] = -sizeX; vertices[10] = -sizeY; vertices[11] = -sizeZ;
 
+		vertices[12] = -sizeX; vertices[13] = sizeY; vertices[14] = sizeZ;
+		vertices[15] = sizeX; vertices[16] = sizeY; vertices[17] = sizeZ;
+		vertices[18] = sizeX; vertices[19] = -sizeY; vertices[20] = sizeZ;
+		vertices[21] = -sizeX; vertices[22] = -sizeY; vertices[23] = sizeZ;
+
+		/*
 		vertices[0] = -sizeX;		vertices[1] = -sizeY;		vertices[2] = 0;			//ซ้ายล่าง ใน
 		vertices[3] = -sizeX - thin;	vertices[4] = -sizeY - thin;	vertices[5] = 0;			//ซ้ายล่าง นอก
 
@@ -43,8 +54,18 @@ public :
 
 		vertices[18] = sizeX;			vertices[19] = sizeY;			vertices[20] = 0;			//ขวาบน ใน
 		vertices[21] = sizeX + thin;	vertices[22] = sizeY + thin;	vertices[23] = 0;			//ขวาบน นอก
+		*/
+		int index[] = {
+			0,3,7,4,
+			5,1,2,3,
+			7,6,2,1,
+			0,4,5,6,
+			7,4
 
-		index[0] = 0;		index[1] = 1;	index[2] = 2;			//ซ้าย
+			
+		};
+		n = 18;
+		/*index[0] = 0;		index[1] = 1;	index[2] = 2;			//ซ้าย
 		index[3] = 3;		index[4] = 1;	index[5] = 2;
 
 		index[6] = 2;		index[7] = 3;	index[8] = 6;			//บน
@@ -54,7 +75,7 @@ public :
 		index[15] = 7;		index[16] = 5;	index[17] = 6;
 
 		index[18] = 0;		index[19] = 1;	index[20] = 4;			//ล่าง
-		index[21] = 5;		index[22] = 1;	index[23] = 4;
+		index[21] = 5;		index[22] = 1;	index[23] = 4;*/
 			
 
 		glGenVertexArrays(1, &this->VAO);
@@ -93,8 +114,10 @@ public :
 		shader.setMat4("view", view);
 		shader.setBool("threeD", threeD);
 		glBindVertexArray(this->VAO);
-		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
-
+		glLineWidth(3.0f);
+		glDrawElements(GL_LINE_LOOP, n, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+		/*
 
 		model = glm::mat4(1.0f);
 		model = glm::scale(model, glm::vec3(sizeRat));
@@ -129,7 +152,7 @@ public :
 		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		shader.setMat4("model", model);
 		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
+		glBindVertexArray(0);*/
 		
 	}
 
@@ -137,22 +160,29 @@ public :
 	void changeSize(float deltaTime,int type,Shader shader) {
 		changeX = 0;
 		if (type == 0) {
-			changeX += deltaTime * velocity;
+			sizeX += deltaTime * velocity;
 		}
 		if (type == 1) {
-			changeX -= deltaTime * velocity;
+			sizeX -= deltaTime * velocity;
 		}
 		if (type == 2) {
-			changeY += deltaTime * velocity;
+			sizeY += deltaTime * velocity;
 		}
 		if (type == 3) {
-			changeY -= deltaTime * velocity;
+			sizeY -= deltaTime * velocity;
 		}
-		std::cout << sizeRat << " " <<changeX<< std::endl;
-		sizeRat = std::max(0.0f,1+ changeX*1000);
-		sizeY = std::max(0.0f, size * changeY);
-
-		//this->init(shader);
+		if (type == 4) {
+			sizeZ -= deltaTime * velocity;
+		}
+		if (type == 5) {
+			sizeZ += deltaTime * velocity;
+		}
+		/*std::cout << sizeX<< " " <<sizeY<< std::endl;
+		//sizeRatX = std::max(0.0f,1+ changeX*1000);
+		//sizeRatY = 
+		sizeY *= std::max(0.0f, changeY * 0.01f);
+		sizeX *= std::max(0.0f, changeX * 0.01f);*/
+		this->init(shader,threeD);
 	}
 
 };

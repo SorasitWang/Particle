@@ -134,7 +134,7 @@ public:
 		
 	}
 
-	void draw(Shader shader,float deltaTime,float sizeWallX,float sizeWallY,
+	void draw(Shader shader,float deltaTime,float sizeWallX,float sizeWallY,float sizeWallZ,
 				std::vector<Ball> balls,int idx,glm::mat4 projection,glm::mat4 view,ballProperty prop) {
 		
 		friction = prop.friction;
@@ -149,7 +149,7 @@ public:
 		glm::mat4 model = glm::mat4(1.0f);
 
 		std::vector<float> wallBorder;
-		wallBorder.push_back(sizeWallX); wallBorder.push_back(-sizeWallX); wallBorder.push_back(sizeWallY); wallBorder.push_back(-sizeWallY);
+		wallBorder.push_back(sizeWallX); wallBorder.push_back(sizeWallY); wallBorder.push_back(sizeWallZ);
 		//std::cout << isColWall(wallBorder) << std::endl;
 		
 		
@@ -207,12 +207,12 @@ private :
 		do {
 			this->position.x = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
 			this->position.y = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
-			if (threeD) this->position.z = glm::clamp(((float)rand() / RAND_MAX), 0.015f, 0.985f);
+			this->position.z = glm::clamp(((float)rand() / RAND_MAX) - 0.5, -0.485, 0.485);
 		} while (isColBall(balls, balls.size() - 1));
 		rand();
 		this->direction.x = ((float)rand() / RAND_MAX) - 0.5;
 		this->direction.y = ((float)rand() / RAND_MAX) - 0.5;
-		if (threeD) this->direction.z = ((float)rand() / RAND_MAX) - 0.5;
+		this->direction.z = ((float)rand() / RAND_MAX) - 0.5;
 		//this->direction = glm::normalize(this->direction);
 
 		color = allColor[rand() % allColor.size()];
@@ -226,54 +226,54 @@ private :
 
 	std::string isColWall(std::vector<float> wallBorder) {
 		//std::cout << 
-		float right = wallBorder[0], left = wallBorder[1], up = wallBorder[2], down = wallBorder[3];
+		float x = wallBorder[0], y = wallBorder[1], z = wallBorder[2];
 		//std::cout << position.x+radius << " " << right << std::endl;
 		if (isIn == false) {
 			
-			if (position.y + radius <= up && position.x - radius >= left 
-				&& position.x + radius <= right && position.y - radius >= down) {
+			if (position.y + radius <= y && position.x - radius >= -x 
+				&& position.x + radius <= x && position.y - radius >= -y) {
 				std::cout << "In" << std::endl;
 				isIn = true;
 			}
 
 			return "";
 		}
-		if (position.x + radius >= right) {
-			position.x = right - radius;
+		if (position.x + radius >= x) {
+			position.x = x - radius;
 			direction.x *= -1;
 			velocity.x *= veloLostWall;
 			//return "RIGHT";
 		}
-		if (position.x - radius <= left) {
-			position.x = left + radius;
+		if (position.x - radius <= -x) {
+			position.x = -x + radius;
 			direction.x *= -1;
 			velocity.x *= veloLostWall;
 			//return "LEFT";
 		}
-		if (position.y + radius >= up) {
-			position.y = up - radius;
+		if (position.y + radius >= y) {
+			position.y = y - radius;
 			velocity.y *= -veloLostWall;
 			
 			//return "UP";
 		}
-		if (position.y - radius <= down) {
-			position.y = down + radius;
+		if (position.y - radius <= -y) {
+			position.y = -y + radius;
 			velocity.y *= -veloLostWall;
 			//return "DOWN";
 		}
-		if (threeD) {
-			if (position.z - radius <= 0) {
-				position.z = 0 + radius;
+
+			if (position.z - radius <= -z) {
+				position.z = -z + radius;
 				direction.z *= -1;
 				velocity.z *= veloLostWall;
 			}
-			if (position.z + radius >= 2 * right) {
-				position.z = 2 * right - radius;
+			if (position.z + radius >= z) {
+				position.z = z - radius;
 				direction.z *= -1;
 				velocity.z *= veloLostWall;
 				//return "LET";
 			}
-		}
+		
 		return "";
 	}
 
@@ -330,7 +330,7 @@ private :
 
 	bool isOnGround(std::vector<float> wallBorder) {
 		float threshold = 0.001;
-		float down = wallBorder[3];
+		float down= -wallBorder[1];
 		if (abs(this->position.y - this->radius - down) < threshold)
 			countOnGround += 1;
 		else countOnGround = 0;
