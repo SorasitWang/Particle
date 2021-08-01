@@ -8,13 +8,13 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <iostream>
-#include "./header/shader_m.h"
-#include "./header/stb_image.h"
-#include "./header/camera.h"
+#include "../shader_m.h"
+#include "../stb_image.h"
+#include "../camera.h"
 #include <iostream>
 #include <string>
 #include <time.h>
-#include "Utility.h"
+#include "../Utility.h"
 struct ballProperty {
 	float velocityLostWall = 0.05f;
 	float g = 0.01f;
@@ -36,7 +36,8 @@ public:
 	std::vector<glm::vec3> allColor = { glm::vec3(0.8f, 0.3f, 0.3f) , glm::vec3(0.3f, 0.8f, 0.3f) , glm::vec3(0.3f, 0.3f, 0.8f),
 										glm::vec3(0.6f, 0.6f, 0.2f) ,glm::vec3(0.6f, 0.2f, 0.6f) ,glm::vec3(0.2f, 0.6f, 0.6f) };
 	unsigned int VAO, VBO, EBO;
-	float radius = 0.07;
+	unsigned int colVAO, colVBO, colEBO;
+	float radius = 0.1;
 	float lifeTime = 500.0f;
 	float curTime = 0;
 	float veloLostWall =0.95;
@@ -46,13 +47,16 @@ public:
 	int countOnGround = 0;
 	bool isIn = true;
 	bool move = true;
+	bool col = false;
+	float colFade = 0.5f;
+	float countColFade = 0.0f;
 	bool threeD = false;
 	glm::vec3 velocity = glm::vec3(1, 1, 1);
 	glm::vec3 direction = glm::vec3(0.3,0.5,0.0f);
 	glm::vec3 color = glm::vec3(0.8f, 0.3f, 0.3f);
-	//glm::vec3 velocity = glm::vec3(1,1,0);
 	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
-
+	glm::vec3 colPos = glm::vec3(4.0, 0.0, 0.0);
+	glm::vec3 colRotate = glm::vec3(0.0, 0.0, 0.0);
 
 
 	void init(Shader shader, ballProperty prop,bool threeD,std::vector<Ball> balls) {
@@ -98,7 +102,7 @@ public:
 		}
 
 
-		float vertices[360/5*3 + 3];
+		/*float vertices[360/5*3 + 3];
 		int index[73*3],idx=3;
 		vertices[0] = 0.0f; vertices[1] = 0.0f; vertices[2] = 0.0f;
 		for (int i = 0; i < 360; i += 5) {
@@ -109,7 +113,7 @@ public:
 		for (int i = 1; i <= 72; i++) {
 			index[idx] = 0; index[idx + 1] = i; index[idx + 2] = (i + 1) > 72 ? 1 : i + 1;
 			idx += 3;
-		}
+		}*/
 		
 		setRand(balls);
 		
@@ -132,9 +136,53 @@ public:
 		glEnableVertexAttribArray(0);
 
 		
+
+		float colVertices[360 / 5 * 3 + 3];
+		int colIndex[73 * 3];
+		int idx = 3;
+		colVertices[0] = 0.0f; colVertices[1] = 0.0f; colVertices[2] = 0.0f;
+		for (int i = 0; i < 360; i += 5) {
+			colVertices[idx] = radius * glm::cos(glm::radians((float)i)); colVertices[idx + 1] = radius * glm::sin(glm::radians((float)i)); colVertices[idx + 2] = 0.0f;
+			idx += 3;
+		}
+		idx = 0;
+		for (int i = 1; i <= 72; i++) {
+			colIndex[idx] = 0; colIndex[idx + 1] = i; colIndex[idx + 2] = (i + 1) > 72? 1 :i+1;
+			idx += 3;
+		}
+		/*float size = 0.5;	
+		float colVertices[] = {
+		  size, -0.5f, size,     
+		  size, -0.5f, -size,   
+		 -size, -0.5f,-size,    
+		 -size, -0.5f, size,   
+		};
+
+		int colIndex[] = {
+			0,1,3,
+			1,2,3
+		};*/
+		glGenVertexArrays(1, &this->colVAO);
+		glGenBuffers(1, &this->colVBO);
+		glGenBuffers(1, &this->colEBO);
+		//เชื่อม
+
+
+		glBindVertexArray(this->colVAO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, this->colVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(colVertices), colVertices, GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->colEBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(colIndex), colIndex, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		
 	}
 
-	void draw(Shader shader,float deltaTime,float sizeWallX,float sizeWallY,float sizeWallZ,
+	void draw(Shader shader,Shader colShader,float deltaTime,float sizeWallX,float sizeWallY,float sizeWallZ,
 				std::vector<Ball> balls,int idx,glm::mat4 projection,glm::mat4 view,ballProperty prop) {
 		
 		friction = prop.friction;
@@ -167,12 +215,36 @@ public:
 		}*/
 
 		
+		
 		if (move == true) {
 			if (isOnGround(wallBorder))
 				velocity.x -= friction * deltaTime;
-
-			isColWall(wallBorder);
-
+			float p;
+			
+			
+			switch (isColWall(wallBorder, p))
+			{
+			case 0 :{
+				colPos = glm::vec3(p, position.y, position.z);
+				col = true;
+				colRotate = glm::vec3(0.0, 1.0, 0.0);
+				break;
+				}
+			case 1: {
+				colPos = glm::vec3(position.x, p, position.z);
+				col = true;
+				colRotate = glm::vec3(0.0, 1.0, 0.0);
+				break;
+			}
+			case 2: {
+				colPos = glm::vec3(position.x, position.y, p);
+				col = true;
+				colRotate = glm::vec3(0.0, 1.0, 1.0);
+				break;
+			}
+			//default: //col = false;
+			}
+			
 			velocity.x = std::max(0.0f, velocity.x);
 			position.y += velocity.y * deltaTime;
 			position.x += direction.x * velocity.x * deltaTime;
@@ -197,6 +269,39 @@ public:
 		glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
+
+		if (col && threeD && colPos.x != 4.0f) {
+			if (countColFade > colFade) {
+				countColFade = 0.0f;
+				col = false;
+			}
+			countColFade += deltaTime;
+			colShader.use();
+			model = glm::mat4(1.0f);
+			model = glm::translate(model, colPos);
+			model = glm::rotate(model, 90.0f, colRotate);
+			//model = glm::scale(model,glm::vec3(10.0f) );
+
+			colShader.setMat4("model", model);
+			colShader.setMat4("projection", projection);
+			colShader.setMat4("view", view);
+			colShader.setVec3("color", color);
+			
+			colShader.setFloat("rad",radius);
+			colShader.setVec3("center", colPos);
+			/*glBindVertexArray(this->VAO);
+			//glDrawArrays(GL_TRIANGLES, 0, 3);
+			//glDrawElements(GL_TRIANGLES, 73*3, GL_UNSIGNED_INT, 0);
+			glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);*/
+
+			glBindVertexArray(colVAO);
+			//glDrawArrays(GL_TRIANGLES, 0, 3);
+			glDrawElements(GL_TRIANGLES, 73*3, GL_UNSIGNED_INT, 0);
+			//glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+			printVec3(colPos);
+		}
 	}
 
 	
@@ -224,7 +329,7 @@ private :
 		//this->velocity.x = 1;
 	}
 
-	std::string isColWall(std::vector<float> wallBorder) {
+	int isColWall(std::vector<float> wallBorder,float &p) {
 		//std::cout << 
 		float x = wallBorder[0], y = wallBorder[1], z = wallBorder[2];
 		//std::cout << position.x+radius << " " << right << std::endl;
@@ -236,45 +341,51 @@ private :
 				isIn = true;
 			}
 
-			return "";
+			return -1;
 		}
 		if (position.x + radius >= x) {
 			position.x = x - radius;
 			direction.x *= -1;
 			velocity.x *= veloLostWall;
-			//return "RIGHT";
+			p = position.x;
+			return 0;
 		}
 		if (position.x - radius <= -x) {
 			position.x = -x + radius;
 			direction.x *= -1;
 			velocity.x *= veloLostWall;
-			//return "LEFT";
+			p = position.x;
+			return 0;
 		}
 		if (position.y + radius >= y) {
 			position.y = y - radius;
 			velocity.y *= -veloLostWall;
-			
-			//return "UP";
+			p = position.y;
+			return 1;
 		}
 		if (position.y - radius <= -y) {
 			position.y = -y + radius;
 			velocity.y *= -veloLostWall;
-			//return "DOWN";
+			p = position.y;
+			return 1;
 		}
 
 			if (position.z - radius <= -z) {
 				position.z = -z + radius;
 				direction.z *= -1;
 				velocity.z *= veloLostWall;
+				p = position.z;
+				return 2;
 			}
 			if (position.z + radius >= z) {
 				position.z = z - radius;
 				direction.z *= -1;
 				velocity.z *= veloLostWall;
-				//return "LET";
+				p = position.z;
+				return 2;
 			}
 		
-		return "";
+		return -1;
 	}
 
 	bool isColBall(std::vector<Ball> balls, int idx) {

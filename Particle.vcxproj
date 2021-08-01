@@ -152,11 +152,11 @@
     <ClCompile Include="header\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="header\imgui\imgui_tables.cpp" />
     <ClCompile Include="header\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\glad.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Ball.h" />
+    <ClInclude Include="header\Ball\Ball.h" />
     <ClInclude Include="header\Box\Box.h" />
     <ClInclude Include="header\camera.h" />
     <ClInclude Include="header\imgui\imconfig.h" />
@@ -170,13 +170,15 @@
     <ClInclude Include="header\imgui\imstb_truetype.h" />
     <ClInclude Include="header\shader_m.h" />
     <ClInclude Include="header\stb_image.h" />
-    <ClInclude Include="Utility.h" />
+    <ClInclude Include="header\Utility.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ball.fs" />
-    <None Include="ball.vs" />
-    <None Include="box.fs" />
-    <None Include="box.vs" />
+    <None Include="header\Ball\ball.fs" />
+    <None Include="header\Ball\ball.vs" />
+    <None Include="header\Ball\col.fs" />
+    <None Include="header\Ball\col.vs" />
+    <None Include="header\Box\box.fs" />
+    <None Include="header\Box\box.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -8,9 +8,9 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <iostream>
-#include "./header/shader_m.h"
-#include "./header/stb_image.h"
-#include "./header/camera.h"
+#include "../header/shader_m.h"
+#include "../header/stb_image.h"
+#include "../header/camera.h"
 #include <iostream>
 #include <string>
 #include <time.h>
@@ -37,4 +37,8 @@ float notNear0(float value, float offset) {
 	if (value <= 0 && value > -offset) return -offset;
 	if (value >= 0 && value < offset) return offset;
 	return value;
+}
+
+void printVec3(glm::vec3 v) {
+	std::cout << v.x << " " << v.y << " " << v.z << std::endl;
 }
