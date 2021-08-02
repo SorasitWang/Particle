@@ -289,7 +289,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     {
        
         threeD = !threeD;
-        std::cout << threeD;
+        //std::cout << threeD;
         Shader ballShader = Shader("./header/Ball/ball.vs", "./header/Ball/ball.fs");
         Shader boxShader = Shader("./header/Box/box.vs", "./header/Box/box.fs");
         box.init(boxShader, threeD);

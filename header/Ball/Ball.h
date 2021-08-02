@@ -221,25 +221,31 @@ public:
 				velocity.x -= friction * deltaTime;
 			float p;
 			
-			
+			colShader.use();
 			switch (isColWall(wallBorder, p))
 			{
 			case 0 :{
 				colPos = glm::vec3(p, position.y, position.z);
 				col = true;
 				colRotate = glm::vec3(0.0, 1.0, 0.0);
+				std::cout << "x" << std::endl;
+				colShader.setInt("axis", 0);
 				break;
 				}
 			case 1: {
 				colPos = glm::vec3(position.x, p, position.z);
 				col = true;
-				colRotate = glm::vec3(0.0, 1.0, 0.0);
+				colRotate = glm::vec3(1.0, 0.0, 0.0);
+				std::cout << "y" << std::endl;
+				colShader.setInt("axis", 1);
 				break;
 			}
 			case 2: {
 				colPos = glm::vec3(position.x, position.y, p);
 				col = true;
-				colRotate = glm::vec3(0.0, 1.0, 1.0);
+				colRotate = glm::vec3(0.0, 0.0, 1.0);
+				std::cout << "z" << std::endl;
+				colShader.setInt("axis", 2);
 				break;
 			}
 			//default: //col = false;
@@ -253,6 +259,7 @@ public:
 			velocity.y -= gVelo * deltaTime;
 			direction.y -= gVelo;
 		}
+		shader.use();
 		model = glm::translate(model, glm::vec3(position.x,position.y,position.z*threeD));
 		model = glm::scale(model, glm::vec3(radius));
 		
@@ -277,9 +284,10 @@ public:
 			}
 			countColFade += deltaTime;
 			colShader.use();
+			colShader.setFloat("time", 1 - countColFade / colFade);
 			model = glm::mat4(1.0f);
 			model = glm::translate(model, colPos);
-			model = glm::rotate(model, 90.0f, colRotate);
+			model = glm::rotate(model, glm::radians(90.0f), colRotate);
 			//model = glm::scale(model,glm::vec3(10.0f) );
 
 			colShader.setMat4("model", model);
@@ -300,7 +308,7 @@ public:
 			glDrawElements(GL_TRIANGLES, 73*3, GL_UNSIGNED_INT, 0);
 			//glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
-			printVec3(colPos);
+			//printVec3(colPos);
 		}
 	}
 
@@ -347,26 +355,26 @@ private :
 			position.x = x - radius;
 			direction.x *= -1;
 			velocity.x *= veloLostWall;
-			p = position.x;
+			p = x;
 			return 0;
 		}
 		if (position.x - radius <= -x) {
 			position.x = -x + radius;
 			direction.x *= -1;
 			velocity.x *= veloLostWall;
-			p = position.x;
+			p = -x;
 			return 0;
 		}
 		if (position.y + radius >= y) {
 			position.y = y - radius;
 			velocity.y *= -veloLostWall;
-			p = position.y;
+			p = y;
 			return 1;
 		}
 		if (position.y - radius <= -y) {
 			position.y = -y + radius;
 			velocity.y *= -veloLostWall;
-			p = position.y;
+			p = -y;
 			return 1;
 		}
 
@@ -374,14 +382,14 @@ private :
 				position.z = -z + radius;
 				direction.z *= -1;
 				velocity.z *= veloLostWall;
-				p = position.z;
+				p = -z;
 				return 2;
 			}
 			if (position.z + radius >= z) {
 				position.z = z - radius;
 				direction.z *= -1;
 				velocity.z *= veloLostWall;
-				p = position.z;
+				p = z;
 				return 2;
 			}
 		
