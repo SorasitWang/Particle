@@ -22,6 +22,13 @@ struct ballProperty {
 	float lifeTime = 120.0f;
 	float friction = 0.01f;
 };
+struct ColProperty {
+	glm::vec3 pos = glm::vec3(4.0, 0.0, 0.0);
+	glm::vec3 rotate = glm::vec3(0.0, 0.0, 0.0);
+	float countFade = 0.0f;
+	bool col = false;
+	int axis = -1;
+};
 const int Y_SEGMENTS = 50;
 const int X_SEGMENTS = 50;
 const GLfloat PI = 3.14159265358979323846f;
@@ -49,14 +56,13 @@ public:
 	bool move = true;
 	bool col = false;
 	float colFade = 0.5f;
-	float countColFade = 0.0f;
+	std::vector<ColProperty> colMarkers;
 	bool threeD = false;
 	glm::vec3 velocity = glm::vec3(1, 1, 1);
 	glm::vec3 direction = glm::vec3(0.3,0.5,0.0f);
 	glm::vec3 color = glm::vec3(0.8f, 0.3f, 0.3f);
 	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 colPos = glm::vec3(4.0, 0.0, 0.0);
-	glm::vec3 colRotate = glm::vec3(0.0, 0.0, 0.0);
+	
 
 
 	void init(Shader shader, ballProperty prop,bool threeD,std::vector<Ball> balls) {
@@ -99,24 +105,8 @@ public:
 				sphereIndices.push_back((i + 1) * (X_SEGMENTS + 1) + j + 1);
 				sphereIndices.push_back(i * (X_SEGMENTS + 1) + j + 1);
 			}
-		}
-
-
-		/*float vertices[360/5*3 + 3];
-		int index[73*3],idx=3;
-		vertices[0] = 0.0f; vertices[1] = 0.0f; vertices[2] = 0.0f;
-		for (int i = 0; i < 360; i += 5) {
-			vertices[idx] = radius*glm::cos(glm::radians((float)i)); vertices[idx+1] = radius * glm::sin(glm::radians((float)i)); vertices[idx+2] =0.0f ;
-			idx += 3;
-		}
-		idx = 0;
-		for (int i = 1; i <= 72; i++) {
-			index[idx] = 0; index[idx + 1] = i; index[idx + 2] = (i + 1) > 72 ? 1 : i + 1;
-			idx += 3;
-		}*/
-		
+		}		
 		setRand(balls);
-		
 		
 		glGenVertexArrays(1, &this->VAO);
 		glGenBuffers(1, &this->VBO);
@@ -222,30 +212,37 @@ public:
 			float p;
 			
 			colShader.use();
+			
+			int c = findAvaMarker();
+			
 			switch (isColWall(wallBorder, p))
 			{
 			case 0 :{
-				colPos = glm::vec3(p, position.y, position.z);
-				col = true;
-				colRotate = glm::vec3(0.0, 1.0, 0.0);
-				std::cout << "x" << std::endl;
-				colShader.setInt("axis", 0);
+				
+				colMarkers[c].pos = glm::vec3(p, position.y, position.z);
+				colMarkers[c].col = true;
+				colMarkers[c].rotate = glm::vec3(0.0, 1.0, 0.0);
+				colMarkers[c].axis = 0;
+				//std::cout << "x" << std::endl;
+				//colShader.setInt("axis", 0);
 				break;
 				}
 			case 1: {
-				colPos = glm::vec3(position.x, p, position.z);
-				col = true;
-				colRotate = glm::vec3(1.0, 0.0, 0.0);
-				std::cout << "y" << std::endl;
-				colShader.setInt("axis", 1);
+				colMarkers[c].pos = glm::vec3(position.x, p, position.z);
+				colMarkers[c].col = true;
+				colMarkers[c].rotate = glm::vec3(1.0, 0.0, 0.0);
+				//std::cout << "y" << std::endl;
+				colMarkers[c].axis = 1;
+				//colShader.setInt("axis", 1);
 				break;
 			}
 			case 2: {
-				colPos = glm::vec3(position.x, position.y, p);
-				col = true;
-				colRotate = glm::vec3(0.0, 0.0, 1.0);
-				std::cout << "z" << std::endl;
-				colShader.setInt("axis", 2);
+				colMarkers[c].pos = glm::vec3(position.x, position.y, p);
+				colMarkers[c].col = true;
+				colMarkers[c].rotate = glm::vec3(0.0, 0.0, 1.0);
+				//std::cout << "z" << std::endl;
+				colMarkers[c].axis = 2;
+				
 				break;
 			}
 			//default: //col = false;
@@ -276,39 +273,46 @@ public:
 		glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
-
-		if (col && threeD && colPos.x != 4.0f) {
-			if (countColFade > colFade) {
-				countColFade = 0.0f;
-				col = false;
-			}
-			countColFade += deltaTime;
-			colShader.use();
-			colShader.setFloat("time", 1 - countColFade / colFade);
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, colPos);
-			model = glm::rotate(model, glm::radians(90.0f), colRotate);
-			//model = glm::scale(model,glm::vec3(10.0f) );
-
-			colShader.setMat4("model", model);
-			colShader.setMat4("projection", projection);
-			colShader.setMat4("view", view);
-			colShader.setVec3("color", color);
+		for (auto &marker:colMarkers){
 			
-			colShader.setFloat("rad",radius);
-			colShader.setVec3("center", colPos);
-			/*glBindVertexArray(this->VAO);
-			//glDrawArrays(GL_TRIANGLES, 0, 3);
-			//glDrawElements(GL_TRIANGLES, 73*3, GL_UNSIGNED_INT, 0);
-			glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
-			glBindVertexArray(0);*/
+			if (marker.col && threeD && marker.pos.x != 4.0f) {
+				if (marker.countFade > colFade) {
+					marker.countFade = 0.0f;
+					marker.col = false;
+					//std::cout << "gone" << std::endl;
+					continue;
+				}
+				//printVec3(marker.rotate);
+				
+				marker.countFade += deltaTime;
+				colShader.use();
+				colShader.setInt("axis", marker.axis);
+				colShader.setFloat("time", 1 - marker.countFade / colFade);
+				model = glm::mat4(1.0f);
+				model = glm::translate(model, marker.pos);
+				model = glm::rotate(model, glm::radians(90.0f), marker.rotate);
+				//model = glm::scale(model,glm::vec3(10.0f) );
 
-			glBindVertexArray(colVAO);
-			//glDrawArrays(GL_TRIANGLES, 0, 3);
-			glDrawElements(GL_TRIANGLES, 73*3, GL_UNSIGNED_INT, 0);
-			//glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
-			glBindVertexArray(0);
-			//printVec3(colPos);
+				colShader.setMat4("model", model);
+				colShader.setMat4("projection", projection);
+				colShader.setMat4("view", view);
+				colShader.setVec3("color", color);
+
+				colShader.setFloat("rad", radius);
+				colShader.setVec3("center", marker.pos);
+				/*glBindVertexArray(this->VAO);
+				//glDrawArrays(GL_TRIANGLES, 0, 3);
+				//glDrawElements(GL_TRIANGLES, 73*3, GL_UNSIGNED_INT, 0);
+				glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
+				glBindVertexArray(0);*/
+
+				glBindVertexArray(colVAO);
+				//glDrawArrays(GL_TRIANGLES, 0, 3);
+				glDrawElements(GL_TRIANGLES, 73 * 3, GL_UNSIGNED_INT, 0);
+				//glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
+				glBindVertexArray(0);
+				//printVec3(colPos);
+			}
 		}
 	}
 
@@ -458,5 +462,14 @@ private :
 		return false;
 	}
 
+	int findAvaMarker() {
+		for (int i = 0; i < colMarkers.size(); i++) {
+			if (colMarkers[i].col == false) {
+				return i;
+			}
+		}
+		colMarkers.push_back(ColProperty());
+		return colMarkers.size() - 1;
+	}
 	
 };
