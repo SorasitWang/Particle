@@ -56,6 +56,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow* window,float deltatIme,Shader boxShader);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void change3DMode();
+void changeEditMode(GLFWwindow* window);
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
@@ -146,8 +148,7 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    bool show_demo_window = true;
-    bool show_another_window = false;
+
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     while (!glfwWindowShouldClose(window))
@@ -167,9 +168,7 @@ int main()
 
         processInput(window,deltaTime,boxShader);
 
-       
-        if(show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        bool d = threeD, _d = threeD, e = edit, _e = edit;
 
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
@@ -182,8 +181,8 @@ int main()
             ImGui::Text("TAB to change Dimension Mode");
             ImGui::Text("SPACE to change Edit Mode");
             // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Open 3D mode", &threeD);
-            ImGui::Checkbox("Open Edit mode", &edit);// Edit bools storing our window open/close state
+            ImGui::Checkbox("Open 3D mode", &_d);
+            ImGui::Checkbox("Open Edit mode", &_e);// Edit bools storing our window open/close state
             //ImGui::Checkbox("Another Window", &show_another_window);
 
             ImGui::SliderFloat("Friction", &ballProp.friction, 0.0f, 1.0f);
@@ -195,17 +194,11 @@ int main()
            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
+        if (e != _e) changeEditMode(window);
+        if (d != _d) change3DMode();
 
         // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-
+       
         // Rendering
         ImGui::Render();
         int display_w, display_h;
@@ -287,34 +280,39 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 {
     if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
     {
-       
-        threeD = !threeD;
-        //std::cout << threeD;
-        Shader ballShader = Shader("./header/Ball/ball.vs", "./header/Ball/ball.fs");
-        Shader boxShader = Shader("./header/Box/box.vs", "./header/Box/box.fs");
-        box.init(boxShader, threeD);
-        balls = std::vector<Ball>();
-        for (int i = 0; i < numBalls; i++) {
-            balls.push_back(Ball());
-            balls[i].init(ballShader, ballProp, threeD,balls);
-        }
-
+        change3DMode();
     }
 
 
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
-
-        edit = !edit;
-        if (!edit) {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        }
-        else {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        }
-
-
+        changeEditMode(window);
     }
+}
+
+void  change3DMode(){
+     threeD = !threeD;
+    //std::cout << threeD;
+    Shader ballShader = Shader("./header/Ball/ball.vs", "./header/Ball/ball.fs");
+    Shader boxShader = Shader("./header/Box/box.vs", "./header/Box/box.fs");
+    box.init(boxShader, threeD);
+    balls = std::vector<Ball>();
+    for (int i = 0; i < numBalls; i++) {
+        balls.push_back(Ball());
+        balls[i].init(ballShader, ballProp, threeD,balls);
+    }
+    cam.resetPerspective();
+}
+
+void changeEditMode(GLFWwindow* window) {
+    edit = !edit;
+    if (!edit) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+    else {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -332,6 +330,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 {
+    if (edit || !threeD) return;
    
     xPos = xpos; yPos = ypos;
     if (adding == true ) {
@@ -385,7 +384,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
         if (adding == false && threeD == false) {
-            Shader boxShader = Shader("box.vs", "box.fs");
+            Shader boxShader = Shader("./header/Box/box.vs", "./header/Box/box.fs");
             balls.push_back(Ball());
             balls[balls.size() - 1].init(boxShader, ballProp,threeD,balls);
             balls[balls.size() - 1].position = glm::vec3(2 * xPos / SCR_WIDTH - 1, 2 * (-yPos / SCR_HEIGHT + 0.5), 0.5f);

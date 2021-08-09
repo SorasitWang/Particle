@@ -52,6 +52,7 @@ public:
 	float friction = 0.01;
 	float g=0.01,gVelo = 0.0f;
 	int countOnGround = 0;
+	int countOnRoof = 0;
 	bool isIn = true;
 	bool move = true;
 	bool col = false;
@@ -207,7 +208,7 @@ public:
 		
 		
 		if (move == true) {
-			if (isOnGround(wallBorder))
+			if (isTouchSurface(wallBorder))
 				velocity.x -= friction * deltaTime;
 			float p;
 			
@@ -283,7 +284,18 @@ public:
 					continue;
 				}
 				//printVec3(marker.rotate);
-				
+				switch (marker.axis) {
+				case 0:
+					marker.pos.x = copysign( sizeWallX, marker.pos.x);
+					break;
+				case 1 :
+					marker.pos.y = copysign(sizeWallY, marker.pos.y);
+					break;
+				case 2 :
+					marker.pos.z = copysign( sizeWallZ,marker.pos.z);
+					break;
+
+				}
 				marker.countFade += deltaTime;
 				colShader.use();
 				colShader.setInt("axis", marker.axis);
@@ -451,13 +463,18 @@ private :
 		return sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2) + pow(this->position.z-pos2.z,2)*threeD )<= 2.0*this->radius;
 	}
 
-	bool isOnGround(std::vector<float> wallBorder) {
+	bool isTouchSurface(std::vector<float> wallBorder) {
 		float threshold = 0.001;
-		float down= -wallBorder[1];
+		float down= -wallBorder[1] , up = wallBorder[1];
 		if (abs(this->position.y - this->radius - down) < threshold)
 			countOnGround += 1;
 		else countOnGround = 0;
 		if (countOnGround > 100) return true;
+		
+		if (abs(this->position.y + this->radius - up) < threshold)
+			countOnRoof += 1;
+		else countOnRoof = 0;
+		if (countOnRoof > 100) return true;
 	
 		return false;
 	}
