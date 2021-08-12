@@ -56,6 +56,7 @@ public:
 	bool isIn = true;
 	bool move = true;
 	bool col = false;
+	int onSurface = -1; // 0 ground , 1 roof
 	float colFade = 0.5f;
 	std::vector<ColProperty> colMarkers;
 	bool threeD = false;
@@ -208,8 +209,26 @@ public:
 		
 		
 		if (move == true) {
-			if (isTouchSurface(wallBorder))
+			//std::cout << onSurface << " " << velocity.y<< " " << g << std::endl;
+			if (isTouchSurface(wallBorder)) {
+				
 				velocity.x -= friction * deltaTime;
+				if (onSurface == 0 && g > 0) velocity.y = 0;
+				if (onSurface == 0 && g < 0) {
+					onSurface = -1; 
+					countOnGround = 0; 
+					gVelo = 0;
+				}
+				if (onSurface == 1 && g < 0) velocity.y = 0; ;
+				if (onSurface == 1 && g > 0) {
+					onSurface = -1;
+					countOnRoof = 0;
+					gVelo = 0;
+				}
+				
+			}
+			else
+			onSurface = -1;
 			float p;
 			
 			colShader.use();
@@ -381,15 +400,20 @@ private :
 			p = -x;
 			return 0;
 		}
+
 		if (position.y + radius >= y) {
-			position.y = y - radius;
-			velocity.y *= -veloLostWall;
+			if (onSurface == -1) {
+				position.y = y - radius;
+				velocity.y *= -veloLostWall ;
+			}
 			p = y;
 			return 1;
 		}
 		if (position.y - radius <= -y) {
-			position.y = -y + radius;
-			velocity.y *= -veloLostWall;
+			if (onSurface == -1) {
+				position.y = -y + radius;
+				velocity.y *= -veloLostWall ;
+			}
 			p = -y;
 			return 1;
 		}
@@ -464,17 +488,26 @@ private :
 	}
 
 	bool isTouchSurface(std::vector<float> wallBorder) {
-		float threshold = 0.001;
+		float threshold = 0.005;
 		float down= -wallBorder[1] , up = wallBorder[1];
+		
 		if (abs(this->position.y - this->radius - down) < threshold)
 			countOnGround += 1;
 		else countOnGround = 0;
-		if (countOnGround > 100) return true;
+		if (countOnGround > 100) {
+			onSurface = 0;
+			return true;
+		}
+		
 		
 		if (abs(this->position.y + this->radius - up) < threshold)
 			countOnRoof += 1;
 		else countOnRoof = 0;
-		if (countOnRoof > 100) return true;
+		if (countOnRoof > 100) {
+			onSurface = 1;
+			return true;
+		}
+		
 	
 		return false;
 	}
