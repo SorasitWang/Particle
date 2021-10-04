@@ -31,7 +31,7 @@ public :
 	void init(Shader shader,bool threeD) {
 		this->threeD = threeD;
 		float vertices[3*8];
-		//int index[24];
+
 		vertices[0] = -sizeX; vertices[1] = sizeY; vertices[2] = -sizeZ;
 		vertices[3] =  sizeX; vertices[4] = sizeY; vertices[5] = -sizeZ;
 		vertices[6] =  sizeX; vertices[7] = -sizeY; vertices[8] = -sizeZ;
@@ -42,19 +42,6 @@ public :
 		vertices[18] = sizeX; vertices[19] = -sizeY; vertices[20] = sizeZ;
 		vertices[21] = -sizeX; vertices[22] = -sizeY; vertices[23] = sizeZ;
 
-		/*
-		vertices[0] = -sizeX;		vertices[1] = -sizeY;		vertices[2] = 0;			//ซ้ายล่าง ใน
-		vertices[3] = -sizeX - thin;	vertices[4] = -sizeY - thin;	vertices[5] = 0;			//ซ้ายล่าง นอก
-
-		vertices[6] = -sizeX;		vertices[7] = sizeY;			vertices[8] = 0;			//ซ้ายบน ใน
-		vertices[9] = -sizeX - thin;	vertices[10] = sizeY + thin;	vertices[11] = 0;			//ซ้ายบน นอก
-
-		vertices[12] = sizeX;			vertices[13] = -sizeY;		vertices[14] = 0;			//ขวาล่าง ใน
-		vertices[15] = sizeX + thin;	vertices[16] = -sizeY - thin;	vertices[17] = 0;			//ขวาล่าง นอก
-
-		vertices[18] = sizeX;			vertices[19] = sizeY;			vertices[20] = 0;			//ขวาบน ใน
-		vertices[21] = sizeX + thin;	vertices[22] = sizeY + thin;	vertices[23] = 0;			//ขวาบน นอก
-		*/
 		int index[] = {
 			0,3,7,4,
 			5,1,2,3,
@@ -65,24 +52,10 @@ public :
 			
 		};
 		n = 18;
-		/*index[0] = 0;		index[1] = 1;	index[2] = 2;			//ซ้าย
-		index[3] = 3;		index[4] = 1;	index[5] = 2;
-
-		index[6] = 2;		index[7] = 3;	index[8] = 6;			//บน
-		index[9] = 7;		index[10] = 3;	index[11] = 6;
-
-		index[12] = 4;		index[13] = 5;	index[14] = 6;			//ขวา
-		index[15] = 7;		index[16] = 5;	index[17] = 6;
-
-		index[18] = 0;		index[19] = 1;	index[20] = 4;			//ล่าง
-		index[21] = 5;		index[22] = 1;	index[23] = 4;*/
-			
 
 		glGenVertexArrays(1, &this->VAO);
 		glGenBuffers(1, &this->VBO);
 		glGenBuffers(1, &this->EBO);
-		//เชื่อม
-
 
 		glBindVertexArray(this->VAO);
 
@@ -107,8 +80,7 @@ public :
 
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::scale(model, glm::vec3(sizeRat));
-		//model = glm::scale(model, glm::vec3(changeX, changeY, 0.0f));
-		//std::cout << changeX << " " << changeY << std::endl;
+
 		shader.setMat4("model", model);
 		shader.setMat4("projection", projection);
 		shader.setMat4("view", view);
@@ -117,42 +89,6 @@ public :
 		glLineWidth(3.0f);
 		glDrawElements(GL_LINE_LOOP, n, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
-		/*
-
-		model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(sizeRat));
-		model = glm::translate(model, glm::vec3(0.5f+thin , 0.0f, 0.5f + thin));
-		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		shader.setMat4("model", model);
-		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
-
-		model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(sizeRat));
-		model = glm::translate(model, glm::vec3(-0.5f-thin, 0.0f, 0.5f + thin));
-		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		shader.setMat4("model", model);
-		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
-
-		model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(sizeRat));
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f,1.f+thin));
-		shader.setMat4("model", model);
-		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
-
-		model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(sizeRat));
-		model = glm::translate(model, glm::vec3(0.0f, 0.5f + thin, 0.5f + thin));
-		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		shader.setMat4("model", model);
-		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
-
-		model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(sizeRat));
-		model = glm::translate(model, glm::vec3(0.0f, -0.5f-thin, 0.5f + thin));
-		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		shader.setMat4("model", model);
-		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);*/
 		
 	}
 
@@ -177,11 +113,7 @@ public :
 		if (type == 5) {
 			sizeZ += deltaTime * velocity;
 		}
-		/*std::cout << sizeX<< " " <<sizeY<< std::endl;
-		//sizeRatX = std::max(0.0f,1+ changeX*1000);
-		//sizeRatY = 
-		sizeY *= std::max(0.0f, changeY * 0.01f);
-		sizeX *= std::max(0.0f, changeX * 0.01f);*/
+	
 		this->init(shader,threeD);
 	}
 

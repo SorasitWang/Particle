@@ -113,8 +113,6 @@ public:
 		glGenVertexArrays(1, &this->VAO);
 		glGenBuffers(1, &this->VBO);
 		glGenBuffers(1, &this->EBO);
-		//เชื่อม
-
 
 		glBindVertexArray(this->VAO);
 
@@ -142,22 +140,10 @@ public:
 			colIndex[idx] = 0; colIndex[idx + 1] = i; colIndex[idx + 2] = (i + 1) > 72? 1 :i+1;
 			idx += 3;
 		}
-		/*float size = 0.5;	
-		float colVertices[] = {
-		  size, -0.5f, size,     
-		  size, -0.5f, -size,   
-		 -size, -0.5f,-size,    
-		 -size, -0.5f, size,   
-		};
-
-		int colIndex[] = {
-			0,1,3,
-			1,2,3
-		};*/
+		
 		glGenVertexArrays(1, &this->colVAO);
 		glGenBuffers(1, &this->colVBO);
 		glGenBuffers(1, &this->colEBO);
-		//เชื่อม
 
 
 		glBindVertexArray(this->colVAO);
@@ -190,26 +176,12 @@ public:
 
 		std::vector<float> wallBorder;
 		wallBorder.push_back(sizeWallX); wallBorder.push_back(sizeWallY); wallBorder.push_back(sizeWallZ);
-		//std::cout << isColWall(wallBorder) << std::endl;
-		
-		
-		
+	
 		
 		isColBall(balls, idx);
-		//std::cout << direction.y << std::endl;
-		/*if (check == "UP" || check=="DOWN") {
-			//direction.y *= -1;
-			velocity.y *= -veloLost ;
-		}
-		else if (check == "RIGHT" || check == "LEFT") {
-			direction.x *= -1;
-			velocity.x *= 0.8;
-		}*/
-
-		
 		
 		if (move == true) {
-			//std::cout << onSurface << " " << velocity.y<< " " << g << std::endl;
+			
 			if (isTouchSurface(wallBorder)) {
 				
 				velocity.x -= friction * deltaTime;
@@ -243,35 +215,31 @@ public:
 				colMarkers[c].col = true;
 				colMarkers[c].rotate = glm::vec3(0.0, 1.0, 0.0);
 				colMarkers[c].axis = 0;
-				//std::cout << "x" << std::endl;
-				//colShader.setInt("axis", 0);
 				break;
 				}
 			case 1: {
 				colMarkers[c].pos = glm::vec3(position.x, p, position.z);
 				colMarkers[c].col = true;
 				colMarkers[c].rotate = glm::vec3(1.0, 0.0, 0.0);
-				//std::cout << "y" << std::endl;
 				colMarkers[c].axis = 1;
-				//colShader.setInt("axis", 1);
 				break;
 			}
 			case 2: {
 				colMarkers[c].pos = glm::vec3(position.x, position.y, p);
 				colMarkers[c].col = true;
 				colMarkers[c].rotate = glm::vec3(0.0, 0.0, 1.0);
-				//std::cout << "z" << std::endl;
 				colMarkers[c].axis = 2;
 				
 				break;
 			}
-			//default: //col = false;
 			}
 			
 			velocity.x = std::max(0.0f, velocity.x);
 			position.y += velocity.y * deltaTime;
 			position.x += direction.x * velocity.x * deltaTime;
+
 			if(threeD) position.z += direction.z * velocity.z * deltaTime;
+
 			gVelo += g * deltaTime;
 			velocity.y -= gVelo * deltaTime;
 			direction.y -= gVelo;
@@ -285,11 +253,9 @@ public:
 		shader.setMat4("view", view);
 		shader.setBool("threeD", threeD);
 		shader.setVec3("color", color);
-		//std::cout << 1.0f - (curTime / lifeTime) << std::endl;
+
 		shader.setFloat("alpha", 1.0f-(curTime/ lifeTime));
 		glBindVertexArray(this->VAO);
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
-		//glDrawElements(GL_TRIANGLES, 73*3, GL_UNSIGNED_INT, 0);
 		glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
@@ -299,10 +265,8 @@ public:
 				if (marker.countFade > colFade) {
 					marker.countFade = 0.0f;
 					marker.col = false;
-					//std::cout << "gone" << std::endl;
 					continue;
 				}
-				//printVec3(marker.rotate);
 				switch (marker.axis) {
 				case 0:
 					marker.pos.x = copysign( sizeWallX, marker.pos.x);
@@ -322,7 +286,6 @@ public:
 				model = glm::mat4(1.0f);
 				model = glm::translate(model, marker.pos);
 				model = glm::rotate(model, glm::radians(90.0f), marker.rotate);
-				//model = glm::scale(model,glm::vec3(10.0f) );
 
 				colShader.setMat4("model", model);
 				colShader.setMat4("projection", projection);
@@ -331,18 +294,10 @@ public:
 
 				colShader.setFloat("rad", radius);
 				colShader.setVec3("center", marker.pos);
-				/*glBindVertexArray(this->VAO);
-				//glDrawArrays(GL_TRIANGLES, 0, 3);
-				//glDrawElements(GL_TRIANGLES, 73*3, GL_UNSIGNED_INT, 0);
-				glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
-				glBindVertexArray(0);*/
 
 				glBindVertexArray(colVAO);
-				//glDrawArrays(GL_TRIANGLES, 0, 3);
 				glDrawElements(GL_TRIANGLES, 73 * 3, GL_UNSIGNED_INT, 0);
-				//glDrawElements(GL_TRIANGLES, X_SEGMENTS * Y_SEGMENTS * 6, GL_UNSIGNED_INT, 0);
 				glBindVertexArray(0);
-				//printVec3(colPos);
 			}
 		}
 	}
@@ -361,21 +316,16 @@ private :
 		this->direction.x = ((float)rand() / RAND_MAX) - 0.5;
 		this->direction.y = ((float)rand() / RAND_MAX) - 0.5;
 		this->direction.z = ((float)rand() / RAND_MAX) - 0.5;
-		//this->direction = glm::normalize(this->direction);
 
 		color = allColor[rand() % allColor.size()];
 
-		
+
 
 		this->direction = glm::normalize(direction);
-		//this->directionX = this->velocity.x;
-		//this->velocity.x = 1;
 	}
 
 	int isColWall(std::vector<float> wallBorder,float &p) {
-		//std::cout << 
 		float x = wallBorder[0], y = wallBorder[1], z = wallBorder[2];
-		//std::cout << position.x+radius << " " << right << std::endl;
 		if (isIn == false) {
 			
 			if (position.y + radius <= y && position.x - radius >= -x 
@@ -441,8 +391,7 @@ private :
 		bool re = false;
 		for (int i = 0; i < balls.size(); i++) {
 			if (collapse(balls[i].position) && idx != i && balls[i].curTime <= balls[i].lifeTime) {
-				//std::cout << "this " << position.x << " " << position.y << " / "<<direction.x << " " << velocity.y <<std::endl;
-				//std::cout << "ball " << balls[i].position.x << " " << balls[i].position.y << " / " << balls[i].direction.x << " " << balls[i].velocity.y << std::endl;
+				
 				glm::vec3 link = glm::normalize(glm::vec3(this->position.x- balls[i].position.x , this->position.y - balls[i].position.y, this->position.z - balls[i].position.z));
 				glm::vec3 normal = glm::normalize(glm::cross(link, glm::vec3(0.0f, 0.0f, 1.0f)));
 
@@ -452,7 +401,6 @@ private :
 				glm::vec3 tmpB = glm::normalize(glm::vec3(balls[i].direction.x, balls[i].velocity.y, balls[i].direction.z * threeD));
 
 				//this
-				//std::cout << veloLost << std::endl;
 				glm::vec3 reflect = glm::normalize(position- balls[i].position);
 				float sizeThis = direction.x * direction.x + velocity.y * velocity.y + direction.z * direction.z * threeD;
 				this->direction.x = (reflect.x + 1*direction.x);
@@ -483,7 +431,6 @@ private :
 	}
 
 	float collapse(glm::vec3 pos2) {
-		//std::cout << sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2)) << std::endl;
 		return sqrt(pow(this->position.x - pos2.x, 2) + pow(this->position.y - pos2.y, 2) + pow(this->position.z-pos2.z,2)*threeD )<= 2.0*this->radius;
 	}
 

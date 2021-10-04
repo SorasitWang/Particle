@@ -84,7 +84,7 @@ bool adding = false;
 Box box = Box(0);
 Camera cam = Camera();
 
-int numBalls = 1;
+int numBalls = 5;
 std::vector<Ball> balls;
 int main()
 {
@@ -292,7 +292,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void  change3DMode(){
      threeD = !threeD;
-    //std::cout << threeD;
     Shader ballShader = Shader("./header/Ball/ball.vs", "./header/Ball/ball.fs");
     Shader boxShader = Shader("./header/Box/box.vs", "./header/Box/box.fs");
     box.init(boxShader, threeD);
@@ -330,9 +329,16 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 {
-    if (edit || !threeD) return;
-   
+    
     xPos = xpos; yPos = ypos;
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+
     if (adding == true ) {
         if (oldPos[0] == -1) {
             oldPos[0] = xPos;
@@ -346,24 +352,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         countTime += deltaTime;
     }
     if (adding == false) {
-        //std::cout << xPos << " " << oldPos[0] << "---" << yPos << " " << oldPos[1] << std::endl;
+
         direction.y = yPos - oldPos[1];
         direction.x = xPos - oldPos[0];
         oldPos[0] = -1;
         oldPos[1] = -1;
     }
-        
-
-        /*if (countTime > collectTime) {
-            //std::cout << countTime << std::endl;
-            
-            countTime = 0.0f;
-            //if (abs(slope - oldSlope) > 0.3) {
-                //oldSlope = slope;
-            
-            //}
-        }
-    }*/
     if (adding) balls[balls.size() - 1].position = glm::vec3(2 * xPos / SCR_WIDTH - 1, 2 * (-yPos / SCR_HEIGHT + 0.5), 0.0f);
     if (firstMouse)
     {
@@ -372,11 +366,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         firstMouse = false;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-    lastX = xpos;
-    lastY = ypos;
+   
     cam.ProcessMouseMovement(xoffset, yoffset);
 }
 
@@ -388,6 +378,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             balls.push_back(Ball());
             balls[balls.size() - 1].init(boxShader, ballProp,threeD,balls);
             balls[balls.size() - 1].position = glm::vec3(2 * xPos / SCR_WIDTH - 1, 2 * (-yPos / SCR_HEIGHT + 0.5), 0.5f);
+       
             balls[balls.size() - 1].velocity.y = 0;
             balls[balls.size() - 1].isIn = false;
             balls[balls.size() - 1].move = false;
@@ -401,22 +392,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         adding = false;
         balls[balls.size() - 1].velocity.y = -1;
         balls[balls.size() - 1].move = true;
-//std::cout << xPos << " " << oldPos[0] << "////" << yPos << " " << oldPos[1] << std::endl;
-       
-        
         direction.x = xPos - oldPos[0];
         direction.y = yPos - oldPos[1];
         if (oldPos[0] == -1)
             direction.x = 0.0;
         if (oldPos[1] == -1)
             direction.y = 0.0;
-        //std::cout << direction.x << " " << SCR_WIDTH << " " << direction.y << " " << SCR_HEIGHT << std::endl;
         balls[balls.size() - 1].direction.x = 6*direction.x / SCR_WIDTH;
         balls[balls.size() - 1].velocity.y = -6*direction.y / SCR_HEIGHT;
     }
 }
-
-
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
