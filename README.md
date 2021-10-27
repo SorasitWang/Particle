@@ -34,6 +34,9 @@ Simulate particles movement in box both in 2D and 3D which can change the enviro
 
 https://user-images.githubusercontent.com/60053627/135568601-b96e4fb0-32c1-48de-a9a4-285fa580fd8d.mp4
 
+## Credit
+   Study from https://learnopengl.com/ and also some of the code. 
+
 
 
 https://user-images.githubusercontent.com/60053627/135568609-ab538ede-7719-4608-950d-2ac7846d7fd5.mp4
